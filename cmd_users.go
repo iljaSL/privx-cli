@@ -81,7 +81,7 @@ func cmdUsers(client *api.Client) {
 		}
 		for idx, role := range roles {
 			fmt.Printf("Role %d:\n", idx)
-			printRole(role)
+			printRole(role, true)
 		}
 
 	case "search":

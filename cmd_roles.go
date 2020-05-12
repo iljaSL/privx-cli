@@ -38,7 +38,7 @@ func cmdRoles(client *api.Client) {
 		}
 		for idx, role := range roles {
 			fmt.Printf("Role %d:\n", idx)
-			printRole(role)
+			printRole(role, false)
 		}
 
 	default:
@@ -46,13 +46,15 @@ func cmdRoles(client *api.Client) {
 	}
 }
 
-func printRole(role *rolestore.Role) {
+func printRole(role *rolestore.Role, userRoles bool) {
 	fmt.Printf("           ID : %s\n", role.ID)
 	fmt.Printf("         Name : %s\n", role.Name)
-	fmt.Printf("     Explicit : %v\n", role.Explicit)
-	fmt.Printf("     Implicit : %v\n", role.Implicit)
+	if userRoles {
+		fmt.Printf("     Explicit : %v\n", role.Explicit)
+		fmt.Printf("     Implicit : %v\n", role.Implicit)
+		fmt.Printf("   Grant Type : %s\n", role.GrantType)
+	}
 	fmt.Printf("       System : %v\n", role.System)
-	fmt.Printf("    GrantType : %s\n", role.GrantType)
 	fmt.Printf("      Comment : %s\n", role.Comment)
 	fmt.Printf("  Permissions : %s\n", strings.Join(role.Permissions, ", "))
 	fmt.Printf(" Member Count : %d\n", role.MemberCount)
