@@ -17,6 +17,7 @@ import (
 )
 
 func cmdRoles(client *api.Client) {
+	roleID := flag.String("id", "", "Role ID")
 	flag.Parse()
 
 	store, err := rolestore.NewClient(client)
@@ -25,7 +26,7 @@ func cmdRoles(client *api.Client) {
 	}
 
 	if len(flag.Args()) == 0 {
-		log.Fatalf("Possible commands are: list")
+		log.Fatalf("Possible commands are: list, members")
 	}
 
 	cmd := flag.Args()[0]
@@ -39,6 +40,19 @@ func cmdRoles(client *api.Client) {
 		for idx, role := range roles {
 			fmt.Printf("Role %d:\n", idx)
 			printRole(role, false)
+		}
+
+	case "members":
+		if len(*roleID) == 0 {
+			log.Fatalf("No role ID specified.")
+		}
+		users, err := store.GetRoleMembers(*roleID)
+		if err != nil {
+			log.Fatalf("get role members failed: %s", err)
+		}
+		for idx, user := range users {
+			fmt.Printf("User %d:\n", idx)
+			printUser(user)
 		}
 
 	default:
