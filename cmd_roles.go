@@ -63,7 +63,7 @@ func cmdRoles(client *api.Client) {
 }
 
 func printRole(role *rolestore.Role, userRoles bool) {
-	tab := format()
+	tab := outputFormat()
 	tab.Header("Field").SetAlign(tabulate.MR)
 	tab.Header("Value").SetAlign(tabulate.ML)
 

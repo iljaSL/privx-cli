@@ -24,7 +24,7 @@ var commands = map[string]func(client *api.Client){
 	"roles":   cmdRoles,
 }
 
-var format func() *tabulate.Tabulate
+var outputFormat func() *tabulate.Tabulate
 
 var formats = map[string]func() *tabulate.Tabulate{
 	"whitespace": tabulate.NewWS,
@@ -58,8 +58,8 @@ func main() {
 	formatFlag := flag.String("format", "unicode", "output format")
 	flag.Parse()
 
-	format = formats[*formatFlag]
-	if format == nil {
+	outputFormat = formats[*formatFlag]
+	if outputFormat == nil {
 		log.Printf("Invalid output format '%s'", *formatFlag)
 		log.Printf("Supported formats are:")
 		for k, _ := range formats {
