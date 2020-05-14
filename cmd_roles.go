@@ -10,10 +10,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api"
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
+	"github.com/markkurossi/tabulate"
 )
 
 func cmdRoles(client *api.Client) {
@@ -61,15 +63,27 @@ func cmdRoles(client *api.Client) {
 }
 
 func printRole(role *rolestore.Role, userRoles bool) {
-	fmt.Printf("           ID : %s\n", role.ID)
-	fmt.Printf("         Name : %s\n", role.Name)
-	if userRoles {
-		fmt.Printf("     Explicit : %v\n", role.Explicit)
-		fmt.Printf("     Implicit : %v\n", role.Implicit)
-		fmt.Printf("   Grant Type : %s\n", role.GrantType)
+	tab := tabulate.NewUnicode()
+	tab.Header("Field").SetAlign(tabulate.MR)
+	tab.Header("Value").SetAlign(tabulate.ML)
+
+	err := tabulate.Reflect(tab, role)
+	if err != nil {
+		log.Fatalf("Failed to tabulate: %s", err)
 	}
-	fmt.Printf("       System : %v\n", role.System)
-	fmt.Printf("      Comment : %s\n", role.Comment)
-	fmt.Printf("  Permissions : %s\n", strings.Join(role.Permissions, ", "))
-	fmt.Printf(" Member Count : %d\n", role.MemberCount)
+	tab.Print(os.Stdout)
+
+	if false {
+		fmt.Printf("           ID : %s\n", role.ID)
+		fmt.Printf("         Name : %s\n", role.Name)
+		if userRoles {
+			fmt.Printf("     Explicit : %v\n", role.Explicit)
+			fmt.Printf("     Implicit : %v\n", role.Implicit)
+			fmt.Printf("   Grant Type : %s\n", role.GrantType)
+		}
+		fmt.Printf("       System : %v\n", role.System)
+		fmt.Printf("      Comment : %s\n", role.Comment)
+		fmt.Printf("  Permissions : %s\n", strings.Join(role.Permissions, ", "))
+		fmt.Printf(" Member Count : %d\n", role.MemberCount)
+	}
 }

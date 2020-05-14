@@ -10,10 +10,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api"
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
+	"github.com/markkurossi/tabulate"
 )
 
 func cmdUsers(client *api.Client) {
@@ -100,10 +102,13 @@ func cmdUsers(client *api.Client) {
 }
 
 func printUser(user *rolestore.User) {
-	fmt.Printf("                 ID : %s\n", user.ID)
-	fmt.Printf("          Principal : %s\n", user.Principal)
-	fmt.Printf("               Tags : %s\n", strings.Join(user.Tags, ", "))
-	fmt.Printf("          Full Name : %s\n", user.FullName)
-	fmt.Printf("              Email : %s\n", user.Email)
-	fmt.Printf(" Distinguished Name : %s\n", user.DistinguishedName)
+	tab := tabulate.NewUnicode()
+	tab.Header("Field").SetAlign(tabulate.ML)
+	tab.Header("Value").SetAlign(tabulate.ML)
+
+	err := tabulate.Reflect(tab, user)
+	if err != nil {
+		log.Fatalf("Failed to tabulate: %s", err)
+	}
+	tab.Print(os.Stdout)
 }
