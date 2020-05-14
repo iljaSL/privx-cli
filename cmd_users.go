@@ -106,7 +106,7 @@ func printUser(user *rolestore.User) {
 	tab.Header("Field").SetAlign(tabulate.ML)
 	tab.Header("Value").SetAlign(tabulate.ML)
 
-	err := tabulate.Reflect(tab, user)
+	err := tabulate.Reflect(tab, tabulate.OmitEmpty, []string{"userCtx"}, user)
 	if err != nil {
 		log.Fatalf("Failed to tabulate: %s", err)
 	}

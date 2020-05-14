@@ -67,7 +67,7 @@ func printRole(role *rolestore.Role, userRoles bool) {
 	tab.Header("Field").SetAlign(tabulate.MR)
 	tab.Header("Value").SetAlign(tabulate.ML)
 
-	err := tabulate.Reflect(tab, role)
+	err := tabulate.Reflect(tab, tabulate.OmitEmpty, nil, role)
 	if err != nil {
 		log.Fatalf("Failed to tabulate: %s", err)
 	}
