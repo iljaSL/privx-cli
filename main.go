@@ -15,12 +15,23 @@ import (
 	"github.com/SSHcom/privx-sdk-go/api"
 	"github.com/SSHcom/privx-sdk-go/config"
 	"github.com/SSHcom/privx-sdk-go/oauth"
+	"github.com/markkurossi/tabulate"
 )
 
 var commands = map[string]func(client *api.Client){
 	"users":   cmdUsers,
 	"secrets": cmdSecrets,
 	"roles":   cmdRoles,
+}
+
+var format func() *tabulate.Tabulate
+
+var formats = map[string]func() *tabulate.Tabulate{
+	"whitespace": tabulate.NewWS,
+	"ascii":      tabulate.NewASCII,
+	"unicode":    tabulate.NewUnicode,
+	"colon":      tabulate.NewColon,
+	"csv":        tabulate.NewCSV,
 }
 
 func main() {
@@ -44,7 +55,18 @@ func main() {
 	apiEndpoint := flag.String("api", "", "API endpoint URL")
 	configFile := flag.String("config", config.Default(), "configuration file")
 	verbose := flag.Bool("v", false, "verbose output")
+	formatFlag := flag.String("format", "unicode", "output format")
 	flag.Parse()
+
+	format = formats[*formatFlag]
+	if format == nil {
+		log.Printf("Invalid output format '%s'", *formatFlag)
+		log.Printf("Supported formats are:")
+		for k, _ := range formats {
+			log.Printf(" - %s", k)
+		}
+		os.Exit(1)
+	}
 
 	config, err := config.Read(*configFile)
 	if err != nil {

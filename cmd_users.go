@@ -102,7 +102,7 @@ func cmdUsers(client *api.Client) {
 }
 
 func printUser(user *rolestore.User) {
-	tab := tabulate.NewUnicode()
+	tab := format()
 	tab.Header("Field").SetAlign(tabulate.ML)
 	tab.Header("Value").SetAlign(tabulate.ML)
 
