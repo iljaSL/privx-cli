@@ -62,7 +62,7 @@ func main() {
 	if outputFormat == nil {
 		log.Printf("Invalid output format '%s'", *formatFlag)
 		log.Printf("Supported formats are:")
-		for k, _ := range formats {
+		for k := range formats {
 			log.Printf(" - %s", k)
 		}
 		os.Exit(1)
@@ -78,14 +78,27 @@ func main() {
 		config.API.Endpoint = *apiEndpoint
 	}
 
+	if *verbose {
+		tab := outputFormat()
+		tab.Header("Field").SetAlign(tabulate.MR)
+		tab.Header("Value").SetAlign(tabulate.ML)
+
+		err = tabulate.Reflect(tab, tabulate.OmitEmpty, nil, config)
+		if err != nil {
+			log.Fatalf("Failed to tabulate: %s", err)
+		}
+		tab.Print(os.Stdout)
+	}
+
 	// Construct API client.
 	auth, err := oauth.NewClient(config.Auth, config.API.Endpoint,
 		config.API.Certificate.X509, *verbose)
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := api.NewClient(auth, config.API.Endpoint,
-		config.API.Certificate.X509, *verbose)
+	client, err := api.NewClient(api.Authenticator(auth),
+		api.Endpoint(config.API.Endpoint),
+		api.X509(config.API.Certificate.X509))
 	if err != nil {
 		log.Fatal(err)
 	}

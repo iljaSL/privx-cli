@@ -120,16 +120,14 @@ func flatten(all bool, level int, data interface{}) string {
 		}
 		if level == 0 && all {
 			return fmt.Sprintf("%q", "{"+result+"}")
-		} else {
-			return fmt.Sprintf("{%s}", result)
 		}
+		return fmt.Sprintf("{%s}", result)
 
 	case string:
 		if all {
 			return fmt.Sprintf("%q", element)
-		} else {
-			return element
 		}
+		return element
 
 	default:
 		log.Fatalf("can't flatten %T", element)
