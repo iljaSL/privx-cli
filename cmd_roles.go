@@ -22,10 +22,7 @@ func cmdRoles(client *api.Client) {
 	roleID := flag.String("id", "", "Role ID")
 	flag.Parse()
 
-	store, err := rolestore.NewClient(client)
-	if err != nil {
-		log.Fatalf("failed to create role-store client: %s", err)
-	}
+	store := rolestore.New(client)
 
 	if len(flag.Args()) == 0 {
 		log.Fatalf("Possible commands are: list, members")

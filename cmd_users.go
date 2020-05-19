@@ -22,10 +22,7 @@ func cmdUsers(client *api.Client) {
 	userID := flag.String("id", "", "User ID")
 	flag.Parse()
 
-	store, err := rolestore.NewClient(client)
-	if err != nil {
-		log.Fatalf("failed to create role-store client: %s", err)
-	}
+	store := rolestore.New(client)
 
 	if len(flag.Args()) == 0 {
 		log.Fatalf("Possible commands are: add-role, info, remove-role, roles, search")
@@ -43,7 +40,7 @@ func cmdUsers(client *api.Client) {
 			log.Fatalf("No role IDs specified.")
 		}
 		for _, roleID := range args {
-			err = store.AddUserRole(*userID, roleID)
+			err := store.AddUserRole(*userID, roleID)
 			if err != nil {
 				log.Fatalf("Failed to add role '%s': %s", roleID, err)
 			}
@@ -67,7 +64,7 @@ func cmdUsers(client *api.Client) {
 			log.Fatalf("No role IDs specified.")
 		}
 		for _, roleID := range args {
-			err = store.RemoveUserRole(*userID, roleID)
+			err := store.RemoveUserRole(*userID, roleID)
 			if err != nil {
 				log.Fatalf("Failed to remove role '%s': %s", roleID, err)
 			}

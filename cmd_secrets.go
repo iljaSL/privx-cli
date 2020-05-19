@@ -23,10 +23,7 @@ func cmdSecrets(client *api.Client) {
 	bourne := flag.Bool("s", false, "Generate Bourne shell commands on stdout")
 	flag.Parse()
 
-	v, err := vault.NewClient(client)
-	if err != nil {
-		log.Fatalf("failed to create Vault client: %s", err)
-	}
+	v := vault.New(client)
 
 	for _, key := range flag.Args() {
 		parts := strings.Split(key, *separator)

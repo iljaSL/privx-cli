@@ -91,12 +91,12 @@ func main() {
 	}
 
 	// Construct API client.
-	auth, err := oauth.NewClient(config.Auth, config.API.Endpoint,
+	auth, err := oauth.New(config.Auth, config.API.Endpoint,
 		config.API.Certificate.X509, *verbose)
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := api.NewClient(api.Authenticator(auth),
+	client := api.New(api.AccessToken(auth),
 		api.Endpoint(config.API.Endpoint),
 		api.X509(config.API.Certificate.X509))
 	if err != nil {
@@ -104,7 +104,7 @@ func main() {
 	}
 
 	if len(flag.Args()) == 0 {
-		fmt.Fprintf(os.Stderr, "No command specified.\n")
+		flag.Usage()
 		return
 	}
 	os.Args = flag.Args()
