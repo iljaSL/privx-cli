@@ -12,11 +12,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/SSHcom/privx-sdk-go/api"
 	"github.com/SSHcom/privx-sdk-go/api/vault"
+	"github.com/SSHcom/privx-sdk-go/restapi"
 )
 
-func cmdSecrets(client *api.Client) {
+func cmdSecrets(client restapi.Connector) {
 	separator := flag.String("separator", ".", "Data element separator")
 	spread := flag.Bool("spread", false, "Spread compounds types")
 	cshell := flag.Bool("c", false, "Generate C-shell commands on stdout")
@@ -42,7 +42,7 @@ func cmdSecrets(client *api.Client) {
 		if err != nil {
 			log.Fatalf("failed to get secret '%s': %s", key, err)
 		}
-		data, ok := bag["data"]
+		data, ok := (*bag)["data"]
 		if !ok {
 			log.Fatalf("no 'data' in vault response")
 		}

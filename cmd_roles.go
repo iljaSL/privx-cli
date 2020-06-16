@@ -13,12 +13,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/SSHcom/privx-sdk-go/api"
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
+	"github.com/SSHcom/privx-sdk-go/restapi"
 	"github.com/markkurossi/tabulate"
 )
 
-func cmdRoles(client *api.Client) {
+func cmdRoles(client restapi.Connector) {
 	roleID := flag.String("id", "", "Role ID")
 	flag.Parse()
 
@@ -38,7 +38,7 @@ func cmdRoles(client *api.Client) {
 		}
 		for idx, role := range roles {
 			fmt.Printf("Role %d:\n", idx)
-			printRole(role, false)
+			printRole(&role, false)
 		}
 
 	case "members":
@@ -51,7 +51,7 @@ func cmdRoles(client *api.Client) {
 		}
 		for idx, user := range users {
 			fmt.Printf("User %d:\n", idx)
-			printUser(user)
+			printUser(&user)
 		}
 
 	default:

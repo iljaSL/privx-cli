@@ -11,19 +11,31 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
-	"github.com/SSHcom/privx-sdk-go/api"
-	"github.com/SSHcom/privx-sdk-go/config"
 	"github.com/SSHcom/privx-sdk-go/oauth"
+	"github.com/SSHcom/privx-sdk-go/restapi"
 	"github.com/markkurossi/tabulate"
 )
 
-var commands = map[string]func(client *api.Client){
+//
+// command-line options
+type opts struct {
+	config  *string
+	format  *string
+	verbose *bool
+}
+
+//
+// Supported commands
+var commands = map[string]func(client restapi.Connector){
 	"users":   cmdUsers,
 	"secrets": cmdSecrets,
 	"roles":   cmdRoles,
 }
 
+//
+// Supported formatting
 var outputFormat func() *tabulate.Tabulate
 
 var formats = map[string]func() *tabulate.Tabulate{
@@ -34,33 +46,62 @@ var formats = map[string]func() *tabulate.Tabulate{
 	"csv":        tabulate.NewCSV,
 }
 
-func main() {
-	log.SetFlags(0)
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr,
-			"Usage: %s [options] COMMAND [command options] [ARG]...\n",
-			os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nOptions:\n")
-		flag.PrintDefaults()
+//
+func optsParse() *opts {
+	fopts := &opts{
+		config:  flag.String("config", defaultConfig(), "configuration file"),
+		format:  flag.String("format", "unicode", "output format"),
+		verbose: flag.Bool("v", false, "verbose output"),
+	}
+	flag.Parse()
+	return fopts
+}
 
-		fmt.Fprintf(os.Stderr, "\nCommands:\n")
-		for key := range commands {
-			fmt.Fprintf(os.Stderr, "  - %s\n", key)
-		}
-		fmt.Fprintf(os.Stderr,
-			"\nType %s COMMAND -h for help about COMMAND\n",
-			os.Args[0])
+//
+func optsUsage() {
+	fmt.Fprintf(os.Stderr,
+		"Usage: %s [options] COMMAND [command options] [ARG]...\n",
+		os.Args[0])
+	fmt.Fprintf(os.Stderr, "\nOptions:\n")
+	flag.PrintDefaults()
+
+	fmt.Fprintf(os.Stderr, "\nCommands:\n")
+	for key := range commands {
+		fmt.Fprintf(os.Stderr, "  - %s\n", key)
+	}
+	fmt.Fprintf(os.Stderr,
+		"\nType %s COMMAND -h for help about COMMAND\n",
+		os.Args[0])
+}
+
+func defaultConfig() (defaultConfig string) {
+	filename := "privx-sdk.toml"
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("failed to get user's home directory: %s", err)
+		defaultConfig = path.Join("/opt/etc/privx", filename)
+	} else {
+		defaultConfig = path.Join(home, fmt.Sprintf(".%s", filename))
 	}
 
-	apiEndpoint := flag.String("api", "", "API endpoint URL")
-	configFile := flag.String("config", config.Default(), "configuration file")
-	verbose := flag.Bool("v", false, "verbose output")
-	formatFlag := flag.String("format", "unicode", "output format")
-	flag.Parse()
+	return
+}
 
-	outputFormat = formats[*formatFlag]
+func main() {
+	log.SetFlags(0)
+
+	flag.Usage = optsUsage
+	opts := optsParse()
+
+	if len(flag.Args()) == 0 {
+		flag.Usage()
+		return
+	}
+
+	outputFormat = formats[*opts.format]
 	if outputFormat == nil {
-		log.Printf("Invalid output format '%s'", *formatFlag)
+		log.Printf("Invalid output format '%s'", *opts.format)
 		log.Printf("Supported formats are:")
 		for k := range formats {
 			log.Printf(" - %s", k)
@@ -68,45 +109,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	config, err := config.Read(*configFile)
-	if err != nil {
-		log.Fatalf("Failed to read config file '%s': %s", *configFile, err)
-	}
+	auth := oauth.WithClientID(
+		restapi.New(
+			restapi.UseConfigFile(opts.config),
+			restapi.UseEnvironment(),
+		),
+		oauth.UseConfigFile(opts.config),
+		oauth.UseEnvironment(),
+	)
 
-	// Command line overrides.
-	if len(*apiEndpoint) > 0 {
-		config.API.Endpoint = *apiEndpoint
-	}
+	client := restapi.New(
+		restapi.Auth(auth),
+		restapi.UseConfigFile(opts.config),
+		restapi.UseEnvironment(),
+	)
 
-	if *verbose {
-		tab := outputFormat()
-		tab.Header("Field").SetAlign(tabulate.MR)
-		tab.Header("Value").SetAlign(tabulate.ML)
-
-		err = tabulate.Reflect(tab, tabulate.OmitEmpty, nil, config)
-		if err != nil {
-			log.Fatalf("Failed to tabulate: %s", err)
-		}
-		tab.Print(os.Stdout)
-	}
-
-	// Construct API client.
-	auth, err := oauth.New(config.Auth, config.API.Endpoint,
-		config.API.Certificate.X509, *verbose)
-	if err != nil {
-		log.Fatal(err)
-	}
-	client := api.New(api.AccessToken(auth),
-		api.Endpoint(config.API.Endpoint),
-		api.X509(config.API.Certificate.X509))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if len(flag.Args()) == 0 {
-		flag.Usage()
-		return
-	}
 	os.Args = flag.Args()
 	fn, ok := commands[flag.Arg(0)]
 	if !ok {
@@ -116,5 +133,6 @@ func main() {
 	flag.CommandLine = flag.NewFlagSet(
 		fmt.Sprintf("privx-cli %s", os.Args[0]),
 		flag.ExitOnError)
+
 	fn(client)
 }
