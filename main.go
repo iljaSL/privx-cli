@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 
 	"github.com/SSHcom/privx-sdk-go/oauth"
 	"github.com/SSHcom/privx-sdk-go/restapi"
@@ -23,6 +22,8 @@ import (
 type opts struct {
 	config  *string
 	format  *string
+	access  *string
+	secret  *string
 	verbose *bool
 }
 
@@ -49,8 +50,10 @@ var formats = map[string]func() *tabulate.Tabulate{
 //
 func optsParse() *opts {
 	fopts := &opts{
-		config:  flag.String("config", defaultConfig(), "configuration file"),
+		config:  flag.String("config", "", "configuration file"),
 		format:  flag.String("format", "unicode", "output format"),
+		access:  flag.String("access", "", "access key"),
+		secret:  flag.String("secret", "", "secret key"),
 		verbose: flag.Bool("v", false, "verbose output"),
 	}
 	flag.Parse()
@@ -74,20 +77,31 @@ func optsUsage() {
 		os.Args[0])
 }
 
-func defaultConfig() (defaultConfig string) {
-	filename := "privx-sdk.toml"
+//
+func auth(opts *opts) restapi.Authorizer {
+	curl := restapi.New(
+		restapi.UseConfigFile(*opts.config),
+		restapi.UseEnvironment(),
+	)
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Printf("failed to get user's home directory: %s", err)
-		defaultConfig = path.Join("/opt/etc/privx", filename)
-	} else {
-		defaultConfig = path.Join(home, fmt.Sprintf(".%s", filename))
+	if *opts.access != "" {
+		return oauth.WithCredential(
+			curl,
+			oauth.UseConfigFile(*opts.config),
+			oauth.UseEnvironment(),
+			oauth.Access(*opts.access),
+			oauth.Secret(*opts.secret),
+		)
 	}
 
-	return
+	return oauth.WithClientID(
+		curl,
+		oauth.UseConfigFile(*opts.config),
+		oauth.UseEnvironment(),
+	)
 }
 
+//
 func main() {
 	log.SetFlags(0)
 
@@ -109,18 +123,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	auth := oauth.WithClientID(
-		restapi.New(
-			restapi.UseConfigFile(opts.config),
-			restapi.UseEnvironment(),
-		),
-		oauth.UseConfigFile(opts.config),
-		oauth.UseEnvironment(),
-	)
-
 	client := restapi.New(
-		restapi.Auth(auth),
-		restapi.UseConfigFile(opts.config),
+		restapi.Auth(auth(opts)),
+		restapi.UseConfigFile(*opts.config),
 		restapi.UseEnvironment(),
 	)
 
