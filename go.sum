@@ -1,6 +1,7 @@
+9fans.net/go v0.0.2/go.mod h1:lfPdxjq9v8pVQXUMBCx5EO5oLXWQFlKRQgs1kEkjoIM=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/SSHcom/privx-sdk-go v0.0.0-20200519122648-50f7d353030f h1:S/EjwHUKmdKpM4I6kgjpGOBKJowwtm0ASsuhII0xjuY=
-github.com/SSHcom/privx-sdk-go v0.0.0-20200519122648-50f7d353030f/go.mod h1:sFJre6mK3xFcT2yEGdUy6YlJoRJuvPrS4MNelUtwCRY=
-github.com/markkurossi/tabulate v0.0.0-20200519070744-e9afdea70963 h1:+7aNxIno69jh95yX6vxJLS8I0Ds5K3XcJF/kszUw2UE=
-github.com/markkurossi/tabulate v0.0.0-20200519070744-e9afdea70963/go.mod h1:TFmMo1Ii6U3GV2Mys8Pa3Vb5w2dFrQzrb9Ne9y42xSg=
+github.com/SSHcom/privx-sdk-go v0.0.0-20200617034327-242cbd1b35be h1:y3bLul6615VRxQnUjjtyN6XfV3DCMEDEyzf3K84FM6w=
+github.com/SSHcom/privx-sdk-go v0.0.0-20200617034327-242cbd1b35be/go.mod h1:MBMEtcBvvHCCOWZC4udSCJzW78sG90kmqBtB22Fr9gg=
+github.com/markkurossi/tabulate v0.0.0-20200520193822-eef927743b9a h1:IS6KfkgDFHIgVcPX1oh94OZRchZl0Uv52dOyIbu5AnI=
+github.com/markkurossi/tabulate v0.0.0-20200520193822-eef927743b9a/go.mod h1:TFmMo1Ii6U3GV2Mys8Pa3Vb5w2dFrQzrb9Ne9y42xSg=
