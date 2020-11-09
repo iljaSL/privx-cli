@@ -27,7 +27,7 @@ var (
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(
-		&access, "config", "c",
+		&config, "config", "c",
 		"",
 		"path to config file")
 
@@ -37,7 +37,7 @@ func init() {
 		"either access key of api client or username.")
 
 	rootCmd.PersistentFlags().StringVarP(
-		&access, "secret", "s",
+		&secret, "secret", "s",
 		"",
 		"either secret key of api client or password.")
 }

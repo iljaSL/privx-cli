@@ -24,7 +24,7 @@ privx-cli roles -a ... -s ...
 
 func roles(cmd *cobra.Command, args []string) error {
 	store := rolestore.New(curl())
-	roles, err := store.GetRoles()
+	roles, err := store.Roles()
 	if err != nil {
 		return err
 	}
