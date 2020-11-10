@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -20,9 +21,10 @@ func Execute() {
 }
 
 var (
-	config string
-	access string
-	secret string
+	config  string
+	baseURL string
+	access  string
+	secret  string
 )
 
 func init() {
@@ -30,6 +32,11 @@ func init() {
 		&config, "config", "c",
 		"",
 		"path to config file")
+
+	rootCmd.PersistentFlags().StringVar(
+		&access, "url",
+		"",
+		"PrivX absolute URL (e.g. https://your-instance.privx.io)")
 
 	rootCmd.PersistentFlags().StringVarP(
 		&access, "access", "a",
@@ -47,8 +54,19 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:   "privx-cli",
 	Short: "PrivX command line client",
-	Long: `PrivX command line client
+	Long:  `PrivX command line client`,
+	Example: `
+See https://github.com/SSHcom/privx-cli about client configurations
 
+Configure client with environment variables
+export PRIVX_API_BASE_URL=https://your-instance.privx.io
+export PRIVX_API_ACCESS_KEY=your-username
+export PRIVX_API_SECRET_KEY=your-password
+
+Configure client with cli flags
+privx-cli --url https://your-instance.privx.io \
+	--access your-username \
+	--secret your-password 
 `,
 	Run:     root,
 	Version: "v0",
@@ -68,6 +86,7 @@ func auth() restapi.Authorizer {
 	return oauth.WithCredential(
 		curl,
 		oauth.UseConfigFile(config),
+		oauth.UseEnvironment(),
 		oauth.Access(access),
 		oauth.Secret(secret),
 	)
@@ -79,4 +98,14 @@ func curl() restapi.Connector {
 		restapi.UseConfigFile(config),
 		restapi.UseEnvironment(),
 	)
+}
+
+func stdout(data interface{}) error {
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	_, err = os.Stdout.Write(encoded)
+	return err
 }
