@@ -20,7 +20,7 @@ var rolesCmd = &cobra.Command{
 	Short: "PrivX roles",
 	Long:  `List and manage PrivX roles`,
 	Example: `
-privx-cli roles 
+privx-cli roles [access flags]
 	`,
 	SilenceUsage: true,
 	RunE:         roles,

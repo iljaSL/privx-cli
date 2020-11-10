@@ -28,25 +28,10 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(
-		&config, "config", "c",
-		"",
-		"path to config file")
-
-	rootCmd.PersistentFlags().StringVar(
-		&access, "url",
-		"",
-		"PrivX absolute URL (e.g. https://your-instance.privx.io)")
-
-	rootCmd.PersistentFlags().StringVarP(
-		&access, "access", "a",
-		"",
-		"either access key of api client or username.")
-
-	rootCmd.PersistentFlags().StringVarP(
-		&secret, "secret", "s",
-		"",
-		"either secret key of api client or password.")
+	rootCmd.PersistentFlags().StringVarP(&config, "config", "c", "", "path to config file")
+	rootCmd.PersistentFlags().StringVar(&access, "url", "", "PrivX absolute URL (e.g. https://your-instance.privx.io)")
+	rootCmd.PersistentFlags().StringVarP(&access, "access", "a", "", "either access key of api client or username.")
+	rootCmd.PersistentFlags().StringVarP(&secret, "secret", "s", "", "either secret key of api client or password.")
 }
 
 //
