@@ -62,27 +62,17 @@ func root(cmd *cobra.Command, args []string) {
 }
 
 func auth() restapi.Authorizer {
-	if access == "" && secret != "" && strings.HasPrefix(secret, "Bearer") {
-		return oauth.WithToken(secret)
-	}
-
 	curl := restapi.New(
 		restapi.UseConfigFile(config),
 		restapi.UseEnvironment(),
 	)
 
-	if access != "" && secret != "" {
-		return oauth.WithCredential(
-			curl,
-			oauth.Access(access),
-			oauth.Secret(secret),
-		)
-	}
-
-	return oauth.WithClientID(
+	return oauth.With(
 		curl,
 		oauth.UseConfigFile(config),
 		oauth.UseEnvironment(),
+		oauth.Access(access),
+		oauth.Secret(secret),
 	)
 }
 
