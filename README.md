@@ -8,6 +8,9 @@ This is a command line application to use with PrivX. The application supports O
 go get github.com/sshcom/privx-cli
 ```
 
+The binary for major platforms are available at [release section](https://github.com/SSHcom/privx-cli/releases)
+
+
 Obtain access/secret keys from PrivX Instance so that the command line application is able to access PrivX Rest API
 * Login as superuser
 * Go to: Settings > Deployment > Integrate with PrivX Using API clients
@@ -97,6 +100,7 @@ Note, each invocation of privx-cli causes a new authentication request using sup
 
 ```bash
 #!/bin/bash
+export PRIVX_API_BASE_URL=https://example.privx.io
 export PRIVX_API_SECRET_KEY=$(privx-cli --access superuser --secret xhaSgasAU...As)
 
 privx-cli roles
