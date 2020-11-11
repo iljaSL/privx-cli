@@ -1,3 +1,9 @@
+//
+// Copyright (c) 2020 SSH Communications Security Inc.
+//
+// All rights reserved.
+//
+
 package cmd
 
 import (
@@ -54,7 +60,7 @@ privx-cli --url https://your-instance.privx.io \
 	--secret your-password
 `,
 	Run:     root,
-	Version: "v0",
+	Version: "v1",
 }
 
 func root(cmd *cobra.Command, args []string) {
