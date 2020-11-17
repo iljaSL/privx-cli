@@ -8,6 +8,8 @@ This is a command line application to use with PrivX. The application supports O
 go get github.com/sshcom/privx-cli
 ```
 
+**Note**: `go get` installs the application to `$GOPATH/bin`. This folder shall be accessible to your user and be part of the PATH environment variable. Please see [Golang instructions](https://golang.org/doc/gopath_code.html#GOPATH).
+
 The binary for major platforms are available at [release section](https://github.com/SSHcom/privx-cli/releases)
 
 
