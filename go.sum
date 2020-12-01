@@ -18,6 +18,10 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SSHcom/privx-sdk-go v0.2.0 h1:ieKUKjDQo7lnGOjNabEupOsb/YxCZUvYcyNzvrpjIx4=
 github.com/SSHcom/privx-sdk-go v0.2.0/go.mod h1:MBMEtcBvvHCCOWZC4udSCJzW78sG90kmqBtB22Fr9gg=
+github.com/SSHcom/privx-sdk-go v0.3.0 h1:9uMHcGou1m71kBHotePcOr63h3knFGwTzkEW9wWJz8c=
+github.com/SSHcom/privx-sdk-go v0.3.0/go.mod h1:MBMEtcBvvHCCOWZC4udSCJzW78sG90kmqBtB22Fr9gg=
+github.com/SSHcom/privx-sdk-go v0.4.0 h1:3UxGbTbg3DZ0g3LisgxQb89FIUs+uB7avu0kDaYRqZs=
+github.com/SSHcom/privx-sdk-go v0.4.0/go.mod h1:MBMEtcBvvHCCOWZC4udSCJzW78sG90kmqBtB22Fr9gg=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
