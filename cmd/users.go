@@ -157,7 +157,7 @@ privx-cli users local [access flags] --offset OFFSET --limit LIMIT
 func local(cmd *cobra.Command, args []string) error {
 	store := userstore.New(curl())
 
-	user, err := store.GetLocalUsers(offset, limit, userID, userName)
+	user, err := store.LocalUsers(offset, limit, userID, userName)
 	if err != nil {
 		return err
 	}
