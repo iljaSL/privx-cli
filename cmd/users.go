@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
-	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
 
@@ -20,9 +19,6 @@ var (
 	userID         string
 	userRoleGrant  []string
 	userRoleRevoke []string
-	offset         string
-	limit          string
-	userName       string
 )
 
 func init() {
@@ -36,12 +32,6 @@ func init() {
 	usersRolesCmd.Flags().StringArrayVar(&userRoleGrant, "grant", []string{}, "grant role to user, requires role unique id.")
 	usersRolesCmd.Flags().StringArrayVar(&userRoleRevoke, "revoke", []string{}, "revoke role from user, requires role unique id.")
 	usersRolesCmd.MarkFlagRequired("uid")
-
-	usersCmd.AddCommand(localusersCmd)
-	localusersCmd.Flags().StringVar(&offset, "offset", "", "offset")
-	localusersCmd.Flags().StringVar(&limit, "limit", "", "limit")
-	localusersCmd.Flags().StringVar(&userID, "uid", "", "unique user id")
-	localusersCmd.Flags().StringVar(&userName, "name", "", "unique user name")
 }
 
 //
@@ -136,31 +126,4 @@ func userRoles(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return stdout(roles)
-}
-
-//
-//
-var localusersCmd = &cobra.Command{
-	Use:   "local",
-	Short: "local users",
-	Long:  `Get information about PrivX local users`,
-	Example: `
-privx-cli users local [access flags]
-privx-cli users local [access flags] --uid UID
-privx-cli users local [access flags] --name USERNAME
-privx-cli users local [access flags] --offset OFFSET --limit LIMIT
-	`,
-	SilenceUsage: true,
-	RunE:         local,
-}
-
-func local(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
-
-	user, err := store.LocalUsers(offset, limit, userID, userName)
-	if err != nil {
-		return err
-	}
-
-	return stdout(user)
 }
