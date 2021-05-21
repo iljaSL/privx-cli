@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
-	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
 
@@ -120,7 +119,6 @@ func init() {
 	usersRolesCmd.Flags().StringArrayVar(&userRoleGrant, "grant", []string{}, "grant role to user, requires role unique id.")
 	usersRolesCmd.Flags().StringArrayVar(&userRoleRevoke, "revoke", []string{}, "revoke role from user, requires role unique id.")
 	usersRolesCmd.MarkFlagRequired("uid")
-
 }
 
 //
