@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
+	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
 
@@ -47,8 +48,6 @@ func init() {
 	userUpdatePasswordCmd.MarkFlagRequired("uid")
 	userUpdatePasswordCmd.MarkFlagRequired("password")
 
-	//
-	// users commands
 	userListCmd.AddCommand(userShowCmd)
 
 	userListCmd.AddCommand(usersRolesCmd)
