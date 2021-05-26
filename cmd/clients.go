@@ -69,6 +69,7 @@ var clientCreateCmd = &cobra.Command{
 	Example: `
 privx-cli clients create [access flags] JSON-FILE
 	`,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         clientCreate,
 }
@@ -76,10 +77,6 @@ privx-cli clients create [access flags] JSON-FILE
 func clientCreate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
-
-	if len(args) != 1 {
-		return errors.New("requires json file as argument")
-	}
 
 	file, err := openJSON(args[0])
 	if err != nil {
@@ -154,6 +151,7 @@ var clientUpdateCmd = &cobra.Command{
 	Example: `
 privx-cli clients update [access flags] --id TRUSTED-CLIENT-ID JSON-FILE
 	`,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         clientUpdate,
 }
@@ -161,10 +159,6 @@ privx-cli clients update [access flags] --id TRUSTED-CLIENT-ID JSON-FILE
 func clientUpdate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
-
-	if len(args) != 1 {
-		return errors.New("requires json file as argument")
-	}
 
 	file, err := openJSON(args[0])
 	if err != nil {

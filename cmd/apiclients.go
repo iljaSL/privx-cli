@@ -141,6 +141,7 @@ var apiClientUpdateCmd = &cobra.Command{
 	Example: `
 privx-cli users local api-clients update [access flags] --id API-CLIENT-ID JSON-FILE
 	`,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         apiClientUpdate,
 }
@@ -148,10 +149,6 @@ privx-cli users local api-clients update [access flags] --id API-CLIENT-ID JSON-
 func apiClientUpdate(cmd *cobra.Command, args []string) error {
 	var apiClient userstore.APIClient
 	api := userstore.New(curl())
-
-	if len(args) != 1 {
-		return errors.New("requires json file as argument")
-	}
 
 	file, err := openJSON(args[0])
 	if err != nil {

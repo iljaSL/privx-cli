@@ -66,6 +66,7 @@ var userCreateCmd = &cobra.Command{
 	Example: `
 privx-cli users create [access flags] JSON-FILE
 	`,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         userCreate,
 }
@@ -73,10 +74,6 @@ privx-cli users create [access flags] JSON-FILE
 func userCreate(cmd *cobra.Command, args []string) error {
 	var newUser userstore.LocalUser
 	api := userstore.New(curl())
-
-	if len(args) != 1 {
-		return errors.New("requires json file as argument")
-	}
 
 	file, err := openJSON(args[0])
 	if err != nil {
@@ -106,6 +103,7 @@ var userUpdateCmd = &cobra.Command{
 	Example: `
 privx-cli users update [access flags] JSON-FILE --uid UID
 	`,
+	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         userUpdate,
 }
@@ -113,10 +111,6 @@ privx-cli users update [access flags] JSON-FILE --uid UID
 func userUpdate(cmd *cobra.Command, args []string) error {
 	var updateUser userstore.LocalUser
 	api := userstore.New(curl())
-
-	if len(args) != 1 {
-		return errors.New("requires json file as argument")
-	}
 
 	file, err := openJSON(args[0])
 	if err != nil {
@@ -214,15 +208,12 @@ var userShowCmd = &cobra.Command{
 	Example: `
 privx-cli users show [access flags] UID ...
 	`,
+	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 	RunE:         userShow,
 }
 
 func userShow(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return errors.New("requires at least one user id as argument")
-	}
-
 	store := rolestore.New(curl())
 	users := []rolestore.User{}
 
