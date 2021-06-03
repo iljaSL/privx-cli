@@ -7,9 +7,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"errors"
-
 	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +38,7 @@ func init() {
 var clientListCmd = &cobra.Command{
 	Use:   "clients",
 	Short: "Get trusted clients",
-	Long:  `Get trusted clients from the privx local user store`,
+	Long:  `Get trusted clients`,
 	Example: `
 privx-cli clients [access flags]
 	`,
@@ -65,7 +62,7 @@ func trustedClients(cmd *cobra.Command, args []string) error {
 var clientCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create new trusted-client",
-	Long:  `Create new trusted client to privX local user store`,
+	Long:  `Create new trusted client`,
 	Example: `
 privx-cli clients create [access flags] JSON-FILE
 	`,
@@ -78,15 +75,9 @@ func clientCreate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
 
-	file, err := openJSON(args[0])
+	err := readJSON(args[0], &trustedClient)
 	if err != nil {
 		return err
-	}
-
-	jsonParser := json.NewDecoder(file)
-	err = jsonParser.Decode(&trustedClient)
-	if err != nil {
-		return errors.New("json file decoding failed")
 	}
 
 	id, err := api.CreateTrustedClient(trustedClient)
@@ -102,7 +93,7 @@ func clientCreate(cmd *cobra.Command, args []string) error {
 var clientShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Get trusted client by ID",
-	Long:  `Get trusted client by ID from the privx local user store`,
+	Long:  `Get trusted client by ID`,
 	Example: `
 privx-cli clients show [access flags] --id TRUSTED-CLIENT-ID
 	`,
@@ -126,7 +117,7 @@ func clientShow(cmd *cobra.Command, args []string) error {
 var clientDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete trusted client",
-	Long:  `Delete a trusted client from the privx local user store`,
+	Long:  `Delete a trusted client`,
 	Example: `
 privx-cli clients delete [access flags] --id TRUSTED-CLIENT-ID
 	`,
@@ -147,7 +138,7 @@ func clientDelete(cmd *cobra.Command, args []string) error {
 var clientUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update trusted client",
-	Long:  `Update an existing trusted client inside the privx local user store`,
+	Long:  `Update an existing trusted client`,
 	Example: `
 privx-cli clients update [access flags] --id TRUSTED-CLIENT-ID JSON-FILE
 	`,
@@ -160,15 +151,9 @@ func clientUpdate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
 
-	file, err := openJSON(args[0])
+	err := readJSON(args[0], &trustedClient)
 	if err != nil {
 		return err
-	}
-
-	jsonParser := json.NewDecoder(file)
-	err = jsonParser.Decode(&trustedClient)
-	if err != nil {
-		return errors.New("json file decoding failed")
 	}
 
 	err = api.UpdateTrustedClient(trustedClientID, &trustedClient)

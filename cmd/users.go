@@ -8,7 +8,8 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -62,7 +63,7 @@ func init() {
 var userCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create new local user",
-	Long:  `Create new local user to privx local user store`,
+	Long:  `Create new local user`,
 	Example: `
 privx-cli users create [access flags] JSON-FILE
 	`,
@@ -75,15 +76,9 @@ func userCreate(cmd *cobra.Command, args []string) error {
 	var newUser userstore.LocalUser
 	api := userstore.New(curl())
 
-	file, err := openJSON(args[0])
+	err := readJSON(args[0], &newUser)
 	if err != nil {
 		return err
-	}
-
-	jsonParser := json.NewDecoder(file)
-	err = jsonParser.Decode(&newUser)
-	if err != nil {
-		return errors.New("json file decoding failed")
 	}
 
 	uid, err := api.CreateLocalUser(newUser)
@@ -99,7 +94,7 @@ func userCreate(cmd *cobra.Command, args []string) error {
 var userUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update local user",
-	Long:  `Update a local user inside the privx local user store`,
+	Long:  `Update a local user inside`,
 	Example: `
 privx-cli users update [access flags] JSON-FILE --uid UID
 	`,
@@ -112,17 +107,11 @@ func userUpdate(cmd *cobra.Command, args []string) error {
 	var updateUser userstore.LocalUser
 	api := userstore.New(curl())
 
-	file, err := openJSON(args[0])
+	err := readJSON(args[0], &updateUser)
 	if err != nil {
 		return err
 	}
-
-	jsonParser := json.NewDecoder(file)
-	err = jsonParser.Decode(&updateUser)
-	if err != nil {
-		return errors.New("json file decoding failed")
-	}
-
+	fmt.Println(updateUser)
 	err = api.UpdateLocalUser(userID, &updateUser)
 	if err != nil {
 		return err
@@ -136,7 +125,7 @@ func userUpdate(cmd *cobra.Command, args []string) error {
 var userDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete local user",
-	Long:  `Delete a local user from the privx local user store`,
+	Long:  `Delete a local user`,
 	Example: `
 privx-cli users delete [access flags] --uid UID
 	`,
@@ -157,7 +146,7 @@ func userDelete(cmd *cobra.Command, args []string) error {
 var userUpdatePasswordCmd = &cobra.Command{
 	Use:   "update-password",
 	Short: "Update local user password",
-	Long:  `Update a local users password inside the privx local user store`,
+	Long:  `Update a local users password`,
 	Example: `
 privx-cli users update-password [access flags] --uid UID --password NEW-PASSWORD
 	`,
@@ -267,11 +256,22 @@ func userRoles(cmd *cobra.Command, args []string) error {
 	return stdout(roles)
 }
 
-func openJSON(name string) (*os.File, error) {
+func readJSON(name string, object interface{}) error {
 	file, err := os.Open(name)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
 	}
 
-	return file, err
+	err = json.Unmarshal(data, &object)
+	if err != nil {
+		return err
+	}
+
+	return err
 }

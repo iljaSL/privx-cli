@@ -33,8 +33,8 @@ func init() {
 //
 var tagListCmd = &cobra.Command{
 	Use:   "tags",
-	Short: "user/host tags",
-	Long:  `get privx user or host tags`,
+	Short: "User | Host tags",
+	Long:  `Get privx user or host tags`,
 	Example: `
 privx-cli tags [access flags] --type user
 privx-cli tags [access flags] --type host --sortdir DESC

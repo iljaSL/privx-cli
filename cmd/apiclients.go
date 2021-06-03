@@ -7,8 +7,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"errors"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/userstore"
@@ -45,7 +43,7 @@ func init() {
 var apiClientListCmd = &cobra.Command{
 	Use:   "api-clients",
 	Short: "Get API clients",
-	Long:  `Get all API clients from the privx local user store`,
+	Long:  `Get all API clients`,
 	Example: `
 privx-cli api-clients [access flags]
 	`,
@@ -68,7 +66,7 @@ func apiClientList(cmd *cobra.Command, args []string) error {
 var apiClientCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create new API client",
-	Long:  `Create new API client to privX local user store`,
+	Long:  `Create new API client`,
 	Example: `
 privx-cli api-clients create [access flags] --name NAME --roles ROLE-ID,ROLE-ID
 	`,
@@ -92,7 +90,7 @@ func apiClientCreate(cmd *cobra.Command, args []string) error {
 var apiClientShowCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Get API client by ID",
-	Long:  `Get API client by ID from the privx local user store`,
+	Long:  `Get API client by ID`,
 	Example: `
 privx-cli api-clients show [access flags] --id API-CLIENT-ID
 	`,
@@ -116,7 +114,7 @@ func apiClientShow(cmd *cobra.Command, args []string) error {
 var apiClientDeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete API client",
-	Long:  `Delete a API client from the privx local user store`,
+	Long:  `Delete a API client`,
 	Example: `
 privx-cli api-clients delete [access flags] --id API-CLIENT-ID
 	`,
@@ -137,7 +135,7 @@ func apiClientDelete(cmd *cobra.Command, args []string) error {
 var apiClientUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update API client",
-	Long:  `Update an existing API client inside the privx local user store`,
+	Long:  `Update an existing API client`,
 	Example: `
 privx-cli users local api-clients update [access flags] --id API-CLIENT-ID JSON-FILE
 	`,
@@ -150,15 +148,9 @@ func apiClientUpdate(cmd *cobra.Command, args []string) error {
 	var apiClient userstore.APIClient
 	api := userstore.New(curl())
 
-	file, err := openJSON(args[0])
+	err := readJSON(args[0], &apiClient)
 	if err != nil {
 		return err
-	}
-
-	jsonParser := json.NewDecoder(file)
-	err = jsonParser.Decode(&apiClient)
-	if err != nil {
-		return errors.New("json file decoding failed")
 	}
 
 	err = api.UpdateAPIClient(clientID, &apiClient)
