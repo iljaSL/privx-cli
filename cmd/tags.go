@@ -58,9 +58,9 @@ func tagList(cmd *cobra.Command, args []string) error {
 }
 
 func userTags() error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	tags, err := store.LocalUserTags(offset, limit, strings.ToUpper(sortdir), query)
+	tags, err := api.LocalUserTags(offset, limit, strings.ToUpper(sortdir), query)
 	if err != nil {
 		return err
 	}
@@ -69,9 +69,9 @@ func userTags() error {
 }
 
 func hostTags() error {
-	store := hoststore.New(curl())
+	api := hoststore.New(curl())
 
-	tags, err := store.HostTags(offset, limit, strings.ToUpper(sortdir), query)
+	tags, err := api.HostTags(offset, limit, strings.ToUpper(sortdir), query)
 	if err != nil {
 		return err
 	}

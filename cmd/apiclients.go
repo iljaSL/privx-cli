@@ -54,8 +54,8 @@ privx-cli api-clients [access flags]
 }
 
 func apiClientList(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
-	result, err := store.APIClients()
+	api := userstore.New(curl())
+	result, err := api.APIClients()
 	if err != nil {
 		return err
 	}
@@ -101,9 +101,9 @@ privx-cli api-clients show [access flags] --id API-CLIENT-ID
 }
 
 func apiClientShow(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	result, err := store.APIClient(clientID)
+	result, err := api.APIClient(clientID)
 	if err != nil {
 		return err
 	}
@@ -125,9 +125,9 @@ privx-cli api-clients delete [access flags] --id API-CLIENT-ID
 }
 
 func apiClientDelete(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	err := store.DeleteAPIClient(clientID)
+	err := api.DeleteAPIClient(clientID)
 
 	return err
 }

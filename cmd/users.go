@@ -145,9 +145,9 @@ privx-cli users delete [access flags] --uid UID
 }
 
 func userDelete(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	err := store.DeleteLocalUser(userID)
+	err := api.DeleteLocalUser(userID)
 
 	return err
 }
@@ -190,8 +190,8 @@ privx-cli users [access flags]
 }
 
 func userList(cmd *cobra.Command, args []string) error {
-	store := rolestore.New(curl())
-	users, err := store.SearchUsers(strings.Join(userQuery, ","), "")
+	api := rolestore.New(curl())
+	users, err := api.SearchUsers(strings.Join(userQuery, ","), "")
 	if err != nil {
 		return err
 	}
@@ -214,11 +214,11 @@ privx-cli users show [access flags] UID ...
 }
 
 func userShow(cmd *cobra.Command, args []string) error {
-	store := rolestore.New(curl())
+	api := rolestore.New(curl())
 	users := []rolestore.User{}
 
 	for _, uid := range args {
-		user, err := store.User(uid)
+		user, err := api.User(uid)
 		if err != nil {
 			return err
 		}
@@ -244,23 +244,23 @@ privx-cli users roles [access flags] --uid UID --revoke role-uid
 }
 
 func userRoles(cmd *cobra.Command, args []string) error {
-	store := rolestore.New(curl())
+	api := rolestore.New(curl())
 
 	for _, role := range userRoleGrant {
-		err := store.GrantUserRole(userID, role)
+		err := api.GrantUserRole(userID, role)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, role := range userRoleRevoke {
-		err := store.RevokeUserRole(userID, role)
+		err := api.RevokeUserRole(userID, role)
 		if err != nil {
 			return err
 		}
 	}
 
-	roles, err := store.UserRoles(userID)
+	roles, err := api.UserRoles(userID)
 	if err != nil {
 		return err
 	}

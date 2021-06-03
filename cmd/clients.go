@@ -50,9 +50,9 @@ privx-cli clients [access flags]
 }
 
 func trustedClients(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	trustedClients, err := store.TrustedClients()
+	trustedClients, err := api.TrustedClients()
 	if err != nil {
 		return err
 	}
@@ -111,9 +111,9 @@ privx-cli clients show [access flags] --id TRUSTED-CLIENT-ID
 }
 
 func clientShow(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	trustedClient, err := store.TrustedClient(trustedClientID)
+	trustedClient, err := api.TrustedClient(trustedClientID)
 	if err != nil {
 		return err
 	}
@@ -135,9 +135,9 @@ privx-cli clients delete [access flags] --id TRUSTED-CLIENT-ID
 }
 
 func clientDelete(cmd *cobra.Command, args []string) error {
-	store := userstore.New(curl())
+	api := userstore.New(curl())
 
-	err := store.DeleteTrustedClient(trustedClientID)
+	err := api.DeleteTrustedClient(trustedClientID)
 
 	return err
 }
