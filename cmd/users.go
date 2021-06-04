@@ -273,5 +273,5 @@ func readJSON(name string, object interface{}) error {
 		return err
 	}
 
-	return err
+	return nil
 }
