@@ -75,7 +75,7 @@ func clientCreate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
 
-	err := readJSON(args[0], &trustedClient)
+	err := decodeJSON(args[0], &trustedClient)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func clientUpdate(cmd *cobra.Command, args []string) error {
 	var trustedClient userstore.TrustedClient
 	api := userstore.New(curl())
 
-	err := readJSON(args[0], &trustedClient)
+	err := decodeJSON(args[0], &trustedClient)
 	if err != nil {
 		return err
 	}

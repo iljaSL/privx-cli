@@ -16,6 +16,7 @@ import (
 var (
 	clientID       string
 	apiClientRoles string
+	name           string
 )
 
 func init() {
@@ -148,7 +149,7 @@ func apiClientUpdate(cmd *cobra.Command, args []string) error {
 	var apiClient userstore.APIClient
 	api := userstore.New(curl())
 
-	err := readJSON(args[0], &apiClient)
+	err := decodeJSON(args[0], &apiClient)
 	if err != nil {
 		return err
 	}

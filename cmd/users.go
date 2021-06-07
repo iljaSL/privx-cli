@@ -76,7 +76,7 @@ func userCreate(cmd *cobra.Command, args []string) error {
 	var newUser userstore.LocalUser
 	api := userstore.New(curl())
 
-	err := readJSON(args[0], &newUser)
+	err := decodeJSON(args[0], &newUser)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func userUpdate(cmd *cobra.Command, args []string) error {
 	var updateUser userstore.LocalUser
 	api := userstore.New(curl())
 
-	err := readJSON(args[0], &updateUser)
+	err := decodeJSON(args[0], &updateUser)
 	if err != nil {
 		return err
 	}
@@ -256,7 +256,7 @@ func userRoles(cmd *cobra.Command, args []string) error {
 	return stdout(roles)
 }
 
-func readJSON(name string, object interface{}) error {
+func decodeJSON(name string, object interface{}) error {
 	file, err := os.Open(name)
 	if err != nil {
 		return err
