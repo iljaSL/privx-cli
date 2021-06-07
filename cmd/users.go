@@ -27,6 +27,7 @@ var (
 	userQuery      []string
 	userRoleGrant  []string
 	userRoleRevoke []string
+	test           string
 )
 
 func init() {
