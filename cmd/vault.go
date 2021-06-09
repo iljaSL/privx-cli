@@ -66,7 +66,7 @@ func secrets(cmd *cobra.Command, args []string) error {
 	secrets := []vault.Secret{}
 
 	for _, uid := range args {
-		bag, err := api.Get(uid)
+		bag, err := api.Secret(uid)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func secretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	api := vault.New(curl())
-	if err := api.Create(vaultID, vaultReadTo, vaultWriteTo, secret); err != nil {
+	if err := api.CreateSecret(vaultID, vaultReadTo, vaultWriteTo, secret); err != nil {
 		return err
 	}
 
@@ -141,7 +141,7 @@ func secretUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	api := vault.New(curl())
-	bag, err := api.Get(vaultID)
+	bag, err := api.Secret(vaultID)
 
 	if len(vaultReadTo) == 0 {
 		for _, ref := range bag.AllowRead {
@@ -155,7 +155,7 @@ func secretUpdate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := api.Update(vaultID, vaultReadTo, vaultWriteTo, secret); err != nil {
+	if err := api.UpdateSecret(vaultID, vaultReadTo, vaultWriteTo, secret); err != nil {
 		return err
 	}
 
@@ -178,7 +178,7 @@ privx-cli vault remove [access flags] --id secret
 func secretsRemove(cmd *cobra.Command, args []string) error {
 	api := vault.New(curl())
 
-	if err := api.Remove(vaultID); err != nil {
+	if err := api.DeleteSecret(vaultID); err != nil {
 		return err
 	}
 
