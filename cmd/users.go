@@ -8,7 +8,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -111,7 +110,7 @@ func userUpdate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(updateUser)
+
 	err = api.UpdateLocalUser(userID, &updateUser)
 	if err != nil {
 		return err
