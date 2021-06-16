@@ -93,7 +93,7 @@ func userCreate(cmd *cobra.Command, args []string) error {
 var userUpdateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "Update local user",
-	Long:  `Update a local user inside`,
+	Long:  `Update a local user`,
 	Example: `
 privx-cli users update [access flags] JSON-FILE --uid UID
 	`,
