@@ -13,6 +13,7 @@ import (
 
 var (
 	hostID         string
+	filter         string
 	deployStatus   bool
 	disabledStatus bool
 )
