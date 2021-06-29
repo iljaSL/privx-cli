@@ -85,7 +85,7 @@ func hostList(cmd *cobra.Command, args []string) error {
 
 	hosts, err := api.Hosts(offset, limit, sortkey, strings.ToUpper(sortdir), filter)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	return stdout(hosts)
@@ -113,13 +113,13 @@ func hostSearch(cmd *cobra.Command, args []string) error {
 	if len(args) == 1 {
 		err := decodeJSON(args[0], &searchObject)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 	}
 
 	hosts, err := api.SearchHost(sortkey, strings.ToUpper(sortdir), filter, offset, limit, &searchObject)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	return stdout(hosts)
@@ -145,12 +145,12 @@ func hostCreate(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &newHost)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	id, err := api.CreateHost(newHost)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	return stdout(id)
@@ -176,7 +176,7 @@ func hostShow(cmd *cobra.Command, args []string) error {
 	for _, id := range strings.Split(hostID, ",") {
 		host, err := api.Host(id)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 		hosts = append(hosts, *host)
 	}
@@ -204,15 +204,15 @@ func hostUpdate(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &updateHost)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	err = api.UpdateHost(hostID, &updateHost)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
-	return err
+	return nil
 }
 
 //
@@ -234,9 +234,9 @@ func hostDelete(cmd *cobra.Command, args []string) error {
 	for _, id := range strings.Split(hostID, ",") {
 		err := api.DeleteHost(id)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		} else {
-			fmt.Printf("%s deleted\n", id)
+			fmt.Println(id)
 		}
 	}
 
@@ -263,12 +263,12 @@ func hostResolve(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &service)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	host, err := api.ResolveHost(service)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	return stdout(host)
@@ -293,9 +293,9 @@ func hostDeployable(cmd *cobra.Command, args []string) error {
 	for _, id := range strings.Split(hostID, ",") {
 		err := api.UpdateDeployStatus(id, deployStatus)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		} else {
-			fmt.Printf("%s updated deployable status\n", id)
+			fmt.Println(id)
 		}
 	}
 
@@ -321,7 +321,7 @@ func hostDisable(cmd *cobra.Command, args []string) error {
 	for _, id := range strings.Split(hostID, ",") {
 		err := api.UpdateDisabledHostStatus(id, disabledStatus)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 	}
 
@@ -346,7 +346,7 @@ func hostSettingList(cmd *cobra.Command, args []string) error {
 
 	settings, err := api.ServiceOptions()
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	return stdout(settings)
@@ -376,7 +376,7 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 
 	seq, err := store.TrustedClients()
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	cli := findClientID(seq, name)
@@ -385,14 +385,14 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 			userstore.HostProvisioning(name),
 		)
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		}
 	}
 
 	conf := apiConfig.New(curl)
 	file, err := conf.ConfigDeploy(cli)
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
 
 	os.Stdout.Write(file)
