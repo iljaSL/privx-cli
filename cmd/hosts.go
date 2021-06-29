@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -209,7 +210,7 @@ func hostUpdate(cmd *cobra.Command, args []string) error {
 	err = api.UpdateHost(hostID, &updateHost)
 	if err != nil {
 		return err
-	}
+	} 
 
 	return err
 }
@@ -234,6 +235,8 @@ func hostDelete(cmd *cobra.Command, args []string) error {
 		err := api.DeleteHost(id)
 		if err != nil {
 			return err
+		} else {
+			fmt.Printf("%s deleted\n", id)
 		}
 	}
 
@@ -291,8 +294,9 @@ func hostDeployable(cmd *cobra.Command, args []string) error {
 		err := api.UpdateDeployStatus(id, deployStatus)
 		if err != nil {
 			return err
+		} else {
+			fmt.Printf("%s updated deployable status\n", id)
 		}
-	}
 
 	return nil
 }
