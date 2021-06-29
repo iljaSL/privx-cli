@@ -322,6 +322,8 @@ func hostDisable(cmd *cobra.Command, args []string) error {
 		err := api.UpdateDisabledHostStatus(id, disabledStatus)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		} else {
+			fmt.Println(id)
 		}
 	}
 
