@@ -210,7 +210,7 @@ func hostUpdate(cmd *cobra.Command, args []string) error {
 	err = api.UpdateHost(hostID, &updateHost)
 	if err != nil {
 		return err
-	} 
+	}
 
 	return err
 }
@@ -297,6 +297,7 @@ func hostDeployable(cmd *cobra.Command, args []string) error {
 		} else {
 			fmt.Printf("%s updated deployable status\n", id)
 		}
+	}
 
 	return nil
 }
