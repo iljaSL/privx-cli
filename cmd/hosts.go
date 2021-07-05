@@ -379,6 +379,7 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 	seq, err := store.TrustedClients()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	cli := findClientID(seq, name)
@@ -388,6 +389,7 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		}
 	}
 
@@ -395,6 +397,7 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 	file, err := conf.ConfigDeploy(cli)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	os.Stdout.Write(file)
