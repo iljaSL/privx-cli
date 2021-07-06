@@ -27,10 +27,9 @@ func Execute() {
 }
 
 var (
-	config  string
-	baseURL string
-	access  string
-	secret  string
+	config string
+	access string
+	secret string
 )
 
 func init() {
