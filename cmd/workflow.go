@@ -8,62 +8,61 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/workflow"
 	"github.com/spf13/cobra"
 )
 
-var (
+type workflowOptions struct {
 	workflowID string
-)
+	limit      int
+	offset     int
+}
 
 func init() {
-	rootCmd.AddCommand(workflowListCmd)
-	workflowListCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	workflowListCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-
-	workflowListCmd.AddCommand(workflowCreateCmd)
-
-	workflowListCmd.AddCommand(workflowShowCmd)
-	workflowShowCmd.Flags().StringVar(&workflowID, "id", "", "unique workflow ID")
-	workflowShowCmd.MarkFlagRequired("id")
-
-	workflowListCmd.AddCommand(workflowDeleteCmd)
-	workflowDeleteCmd.Flags().StringVar(&workflowID, "id", "", "unique workflow ID")
-	workflowDeleteCmd.MarkFlagRequired("id")
-
-	workflowListCmd.AddCommand(workflowUpdateCmd)
-	workflowUpdateCmd.Flags().StringVar(&workflowID, "id", "", "unique workflow ID")
-	workflowUpdateCmd.MarkFlagRequired("id")
-
-	workflowListCmd.AddCommand(workflowSettingListCmd)
-
-	workflowListCmd.AddCommand(workflowSettingsUpdateCmd)
-
-	workflowListCmd.AddCommand(testEmailNotificationCmd)
+	rootCmd.AddCommand(workflowListCmd())
 }
 
 //
 //
-var workflowListCmd = &cobra.Command{
-	Use:   "workflows",
-	Short: "List and manage workflows",
-	Long:  `List and manage PrivX workflows`,
-	Example: `
-privx-cli workflows [access flags] --offset <OFFSET> --limit <LIMIT>
-	`,
-	SilenceUsage: true,
-	RunE:         workflowList,
+func workflowListCmd() *cobra.Command {
+	options := workflowOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "workflows",
+		Short: "List and manage workflows",
+		Long:  `List and manage PrivX workflows`,
+		Example: `
+	privx-cli workflows [access flags] --offset <OFFSET> --limit <LIMIT>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowList(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+
+	cmd.AddCommand(workflowCreateCmd())
+	cmd.AddCommand(workflowShowCmd())
+	cmd.AddCommand(workflowDeleteCmd())
+	cmd.AddCommand(workflowUpdateCmd())
+	cmd.AddCommand(workflowSettingListCmd())
+	cmd.AddCommand(workflowSettingsUpdateCmd())
+	cmd.AddCommand(testEmailNotificationCmd())
+
+	return cmd
 }
 
-func workflowList(cmd *cobra.Command, args []string) error {
+func workflowList(options workflowOptions) error {
 	api := workflow.New(curl())
 
-	workflows, err := api.Workflows(offset, limit)
+	workflows, err := api.Workflows(options.offset, options.limit)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(workflows)
@@ -71,16 +70,22 @@ func workflowList(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new workflow",
-	Long:  `Create a new workflow`,
-	Example: `
-privx-cli workflows create [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         workflowCreate,
+func workflowCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a new workflow",
+		Long:  `Create a new workflow`,
+		Example: `
+	privx-cli workflows create [access flags] JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowCreate(cmd, args)
+		},
+	}
+
+	return cmd
 }
 
 func workflowCreate(cmd *cobra.Command, args []string) error {
@@ -89,12 +94,12 @@ func workflowCreate(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &newWorkflow)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	id, err := api.CreateWorkflow(&newWorkflow)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(id)
@@ -102,25 +107,37 @@ func workflowCreate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Get workflow by ID",
-	Long:  `Get workflow object by ID. Workflow ID's are separated by commas when using multiple values, see example.`,
-	Example: `
-privx-cli workflows show [access flags] --id <WORKFLOW-ID>,<WORKFLOW-ID>
-	`,
-	SilenceUsage: true,
-	RunE:         workflowShow,
+func workflowShowCmd() *cobra.Command {
+	options := workflowOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Get workflow by ID",
+		Long:  `Get workflow object by ID. Workflow ID's are separated by commas when using multiple values, see example.`,
+		Example: `
+	privx-cli workflows show [access flags] --id <WORKFLOW-ID>,<WORKFLOW-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowShow(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.workflowID, "id", "", "unique workflow ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func workflowShow(cmd *cobra.Command, args []string) error {
+func workflowShow(options workflowOptions) error {
 	api := workflow.New(curl())
 	workflows := []workflow.Workflow{}
 
-	for _, id := range strings.Split(workflowID, ",") {
+	for _, id := range strings.Split(options.workflowID, ",") {
 		result, err := api.Workflow(id)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		}
 		workflows = append(workflows, *result)
 	}
@@ -130,24 +147,36 @@ func workflowShow(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete workflow by ID",
-	Long:  `Delete workflow by ID. Workflow ID's are separated by commas when using multiple values, see example.`,
-	Example: `
-privx-cli workflows delete [access flags] --id <WORKFLOW-ID>,<WORKFLOW-ID>
-	`,
-	SilenceUsage: true,
-	RunE:         workflowDelete,
+func workflowDeleteCmd() *cobra.Command {
+	options := workflowOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete workflow by ID",
+		Long:  `Delete workflow by ID. Workflow ID's are separated by commas when using multiple values, see example.`,
+		Example: `
+	privx-cli workflows delete [access flags] --id <WORKFLOW-ID>,<WORKFLOW-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowDelete(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.workflowID, "id", "", "unique workflow ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func workflowDelete(cmd *cobra.Command, args []string) error {
+func workflowDelete(options workflowOptions) error {
 	api := workflow.New(curl())
 
-	for _, id := range strings.Split(workflowID, ",") {
+	for _, id := range strings.Split(options.workflowID, ",") {
 		err := api.DeleteWorkflow(id)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		} else {
 			fmt.Println(id)
 		}
@@ -158,30 +187,42 @@ func workflowDelete(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update a workflow",
-	Long:  `Update a workflow`,
-	Example: `
-privx-cli workflows update [access flags] JSON-FILE --id <WORKFLOW-ID>
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         workflowUpdate,
+func workflowUpdateCmd() *cobra.Command {
+	options := workflowOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update a workflow",
+		Long:  `Update a workflow`,
+		Example: `
+	privx-cli workflows update [access flags] JSON-FILE --id <WORKFLOW-ID>
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowUpdate(options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.workflowID, "id", "", "unique workflow ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func workflowUpdate(cmd *cobra.Command, args []string) error {
+func workflowUpdate(options workflowOptions, args []string) error {
 	var updateWorkflow workflow.Workflow
 	api := workflow.New(curl())
 
 	err := decodeJSON(args[0], &updateWorkflow)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
-	err = api.UpdateWorkflow(workflowID, &updateWorkflow)
+	err = api.UpdateWorkflow(options.workflowID, &updateWorkflow)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return nil
@@ -189,18 +230,24 @@ func workflowUpdate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowSettingListCmd = &cobra.Command{
-	Use:   "settings",
-	Short: "Get workflow settings",
-	Long:  `Get workflow settings`,
-	Example: `
-privx-cli workflows settings [access flags]
-	`,
-	SilenceUsage: true,
-	RunE:         workflowSettingList,
+func workflowSettingListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "settings",
+		Short: "Get workflow settings",
+		Long:  `Get workflow settings`,
+		Example: `
+	privx-cli workflows settings [access flags]
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowSettingList()
+		},
+	}
+
+	return cmd
 }
 
-func workflowSettingList(cmd *cobra.Command, args []string) error {
+func workflowSettingList() error {
 	api := workflow.New(curl())
 
 	settings, err := api.Settings()
@@ -213,16 +260,22 @@ func workflowSettingList(cmd *cobra.Command, args []string) error {
 
 //
 //
-var workflowSettingsUpdateCmd = &cobra.Command{
-	Use:   "update-settings",
-	Short: "Update workflow settings",
-	Long:  `Update workflow settings`,
-	Example: `
-privx-cli workflows update-settings [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         workflowSettingsUpdate,
+func workflowSettingsUpdateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-settings",
+		Short: "Update workflow settings",
+		Long:  `Update workflow settings`,
+		Example: `
+	privx-cli workflows update-settings [access flags] JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return workflowSettingsUpdate(cmd, args)
+		},
+	}
+
+	return cmd
 }
 
 func workflowSettingsUpdate(cmd *cobra.Command, args []string) error {
@@ -231,12 +284,12 @@ func workflowSettingsUpdate(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &updateSettings)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	err = api.UpdateSettings(&updateSettings)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return nil
@@ -244,16 +297,22 @@ func workflowSettingsUpdate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var testEmailNotificationCmd = &cobra.Command{
-	Use:   "testsmtp",
-	Short: "Test the email settings",
-	Long:  `Test the email settings`,
-	Example: `
-privx-cli workflows testsmtp [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         testEmailNotification,
+func testEmailNotificationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "testsmtp",
+		Short: "Test the email settings",
+		Long:  `Test the email settings`,
+		Example: `
+	privx-cli workflows testsmtp [access flags] JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return testEmailNotification(cmd, args)
+		},
+	}
+
+	return cmd
 }
 
 func testEmailNotification(cmd *cobra.Command, args []string) error {
@@ -262,12 +321,12 @@ func testEmailNotification(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &smtp)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	testResult, err := api.TestEmailNotification(&smtp)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(testResult)
