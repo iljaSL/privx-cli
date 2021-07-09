@@ -8,9 +8,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/oauth"
 	"github.com/SSHcom/privx-sdk-go/restapi"
@@ -18,12 +16,8 @@ import (
 )
 
 // Execute is entry point to application
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		e := err.Error()
-		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
-		os.Exit(1)
-	}
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 var (
