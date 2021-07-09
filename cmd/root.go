@@ -17,11 +17,7 @@ import (
 
 // Execute is entry point to application
 func Execute() error {
-	err := rootCmd.Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return rootCmd.Execute()
 }
 
 var (

@@ -237,8 +237,8 @@ func requestSearchCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "search",
-		Short: "Search access requests",
-		Long:  `Search access requests`,
+		Short: "Search workflow requests",
+		Long:  `Search workflow requests`,
 		Example: `
 	privx-cli requests search [access flags] --offset <OFFSET> --limit <LIMIT> --filter <FILTER>
 	privx-cli requests search [access flags] JSON-FILE
