@@ -12,80 +12,67 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+type hostOptions struct {
 	hostID         string
 	filter         string
+	sortkey        string
+	sortdir        string
 	deployStatus   bool
 	disabledStatus bool
-)
+	limit          int
+	offset         int
+}
 
 func init() {
-	rootCmd.AddCommand(hostListCmd)
-	hostListCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	hostListCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-	hostListCmd.Flags().StringVar(&sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	hostListCmd.Flags().StringVar(&sortkey, "sortkey", "", "sort object by name, updated, or created.")
-	hostListCmd.Flags().StringVar(&filter, "filter", "", "filter hosts, possible values: accessible or configured")
-
-	hostListCmd.AddCommand(hostSearchCmd)
-	hostSearchCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	hostSearchCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-	hostSearchCmd.Flags().StringVar(&sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	hostSearchCmd.Flags().StringVar(&sortkey, "sortkey", "", "sort object by name, updated, or created.")
-	hostSearchCmd.Flags().StringVar(&filter, "filter", "", "filter hosts, possible values: accessible or configured")
-
-	hostListCmd.AddCommand(hostCreateCmd)
-
-	hostListCmd.AddCommand(hostShowCmd)
-	hostShowCmd.Flags().StringVar(&hostID, "id", "", "host ID")
-	hostShowCmd.MarkFlagRequired("id")
-
-	hostListCmd.AddCommand(hostUpdateCmd)
-	hostUpdateCmd.Flags().StringVar(&hostID, "id", "", "host ID")
-	hostUpdateCmd.MarkFlagRequired("id")
-
-	hostListCmd.AddCommand(hostDeleteCmd)
-	hostDeleteCmd.Flags().StringVar(&hostID, "id", "", "host ID")
-	hostDeleteCmd.MarkFlagRequired("id")
-
-	hostListCmd.AddCommand(hostResolveCmd)
-
-	hostListCmd.AddCommand(hostDeployableCmd)
-	hostDeployableCmd.Flags().StringVar(&hostID, "id", "", "host ID")
-	hostDeployableCmd.Flags().BoolVar(&deployStatus, "status", false, "host deploy status")
-	hostDeployableCmd.MarkFlagRequired("id")
-	hostDeployableCmd.MarkFlagRequired("status")
-
-	hostListCmd.AddCommand(hostDisableCmd)
-	hostDisableCmd.Flags().StringVar(&hostID, "id", "", "host ID")
-	hostDisableCmd.Flags().BoolVar(&disabledStatus, "status", false, "host disabled status")
-	hostDisableCmd.MarkFlagRequired("id")
-	hostDisableCmd.MarkFlagRequired("status")
-
-	hostListCmd.AddCommand(hostSettingListCmd)
-
-	hostListCmd.AddCommand(hostsDeployCmd)
+	rootCmd.AddCommand(hostListCmd())
 }
 
 //
 //
-var hostListCmd = &cobra.Command{
-	Use:   "hosts",
-	Short: "List and manage PrivX hosts",
-	Long:  `List and manage PrivX hosts`,
-	Example: `
-privx-cli hosts [access flags] --offset <OFFSET> --sortkey <SORTKEY>
-	`,
-	SilenceUsage: true,
-	RunE:         hostList,
+func hostListCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "hosts",
+		Short: "List and manage PrivX hosts",
+		Long:  `List and manage PrivX hosts`,
+		Example: `
+	privx-cli hosts [access flags] --offset <OFFSET> --sortkey <SORTKEY>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostList(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.sortkey, "sortkey", "", "sort object by name, updated, or created.")
+	flags.StringVar(&options.filter, "filter", "", "filter hosts, possible values: accessible or configured")
+
+	cmd.AddCommand(hostSearchCmd())
+	cmd.AddCommand(hostCreateCmd())
+	cmd.AddCommand(hostShowCmd())
+	cmd.AddCommand(hostUpdateCmd())
+	cmd.AddCommand(hostDeleteCmd())
+	cmd.AddCommand(hostResolveCmd())
+	cmd.AddCommand(hostDeployableCmd())
+	cmd.AddCommand(hostDisableCmd())
+	cmd.AddCommand(hostSettingListCmd())
+	cmd.AddCommand(hostsDeployCmd())
+
+	return cmd
 }
 
-func hostList(cmd *cobra.Command, args []string) error {
+func hostList(options hostOptions) error {
 	api := hoststore.New(curl())
 
-	hosts, err := api.Hosts(offset, limit, sortkey, strings.ToUpper(sortdir), filter)
+	hosts, err := api.Hosts(options.offset, options.limit, options.sortkey,
+		strings.ToUpper(options.sortdir), options.filter)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(hosts)
@@ -93,33 +80,49 @@ func hostList(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostSearchCmd = &cobra.Command{
-	Use:   "search",
-	Short: "Search hosts",
-	Long:  `Search hosts`,
-	Example: `
-privx-cli hosts search [access flags] --offset <OFFSET> --sortkey <SORTKEY>
-privx-cli hosts search [access flags] --limit <LIMIT> JSON-FILE
-	`,
-	Args:         cobra.MaximumNArgs(1),
-	SilenceUsage: true,
-	RunE:         hostSearch,
+func hostSearchCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "search",
+		Short: "Search hosts",
+		Long:  `Search hosts`,
+		Example: `
+	privx-cli hosts search [access flags] --offset <OFFSET> --sortkey <SORTKEY>
+	privx-cli hosts search [access flags] --limit <LIMIT> JSON-FILE
+		`,
+		Args:         cobra.MaximumNArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostSearch(options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.filter, "filter", "", "filter hosts, possible values: accessible or configured")
+	flags.StringVar(&options.sortkey, "sortkey", "", "sort by specific object property")
+	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC")
+
+	return cmd
 }
 
-func hostSearch(cmd *cobra.Command, args []string) error {
+func hostSearch(options hostOptions, args []string) error {
 	var searchObject hoststore.HostSearchObject
 	api := hoststore.New(curl())
 
 	if len(args) == 1 {
 		err := decodeJSON(args[0], &searchObject)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		}
 	}
 
-	hosts, err := api.SearchHost(sortkey, strings.ToUpper(sortdir), filter, offset, limit, &searchObject)
+	hosts, err := api.SearchHost(options.sortkey, strings.ToUpper(options.sortdir), options.filter,
+		options.offset, options.limit, &searchObject)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(hosts)
@@ -127,16 +130,22 @@ func hostSearch(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create new host",
-	Long:  `Create new host`,
-	Example: `
-privx-cli hosts create [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         hostCreate,
+func hostCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create new host",
+		Long:  `Create new host`,
+		Example: `
+	privx-cli hosts create [access flags] JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostCreate(cmd, args)
+		},
+	}
+
+	return cmd
 }
 
 func hostCreate(cmd *cobra.Command, args []string) error {
@@ -145,12 +154,12 @@ func hostCreate(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &newHost)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	id, err := api.CreateHost(newHost)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(id)
@@ -158,25 +167,37 @@ func hostCreate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Get host by ID",
-	Long:  `Get host by ID. Host ID's are separated by commas when using multiple values, see example`,
-	Example: `
-privx-cli hosts show [access flags] --id <HOST-ID>,<HOST-ID>
-	`,
-	SilenceUsage: true,
-	RunE:         hostShow,
+func hostShowCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Get host by ID",
+		Long:  `Get host by ID. Host ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli hosts show [access flags] --id <HOST-ID>,<HOST-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostShow(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.hostID, "id", "", "host ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func hostShow(cmd *cobra.Command, args []string) error {
+func hostShow(options hostOptions) error {
 	api := hoststore.New(curl())
 	hosts := []hoststore.Host{}
 
-	for _, id := range strings.Split(hostID, ",") {
+	for _, id := range strings.Split(options.hostID, ",") {
 		host, err := api.Host(id)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		}
 		hosts = append(hosts, *host)
 	}
@@ -186,30 +207,42 @@ func hostShow(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update host",
-	Long:  `Update host`,
-	Example: `
-privx-cli hosts update [access flags] JSON-FILE --id <HOST-ID>
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         hostUpdate,
+func hostUpdateCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update host",
+		Long:  `Update host`,
+		Example: `
+	privx-cli hosts update [access flags] JSON-FILE --id <HOST-ID>
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostUpdate(options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.hostID, "id", "", "unique host ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func hostUpdate(cmd *cobra.Command, args []string) error {
+func hostUpdate(options hostOptions, args []string) error {
 	var updateHost hoststore.Host
 	api := hoststore.New(curl())
 
 	err := decodeJSON(args[0], &updateHost)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
-	err = api.UpdateHost(hostID, &updateHost)
+	err = api.UpdateHost(options.hostID, &updateHost)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return nil
@@ -217,24 +250,36 @@ func hostUpdate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete host",
-	Long:  `Delete host. Host ID's are separated by commas when using multiple values, see example`,
-	Example: `
-privx-cli hosts delete [access flags] --id <HOST-ID>,<HOST-ID>
-	`,
-	SilenceUsage: true,
-	RunE:         hostDelete,
+func hostDeleteCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete host",
+		Long:  `Delete host. Host ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli hosts delete [access flags] --id <HOST-ID>,<HOST-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostDelete(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.hostID, "id", "", "unique host ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func hostDelete(cmd *cobra.Command, args []string) error {
+func hostDelete(options hostOptions) error {
 	api := hoststore.New(curl())
 
-	for _, id := range strings.Split(hostID, ",") {
+	for _, id := range strings.Split(options.hostID, ",") {
 		err := api.DeleteHost(id)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		} else {
 			fmt.Println(id)
 		}
@@ -245,16 +290,22 @@ func hostDelete(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostResolveCmd = &cobra.Command{
-	Use:   "resolve",
-	Short: "Resolve host",
-	Long:  `Resolve service and address to a single host`,
-	Example: `
-privx-cli hosts resolve [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         hostResolve,
+func hostResolveCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "resolve",
+		Short: "Resolve host",
+		Long:  `Resolve service and address to a single host`,
+		Example: `
+	privx-cli hosts resolve [access flags] JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostResolve(cmd, args)
+		},
+	}
+
+	return cmd
 }
 
 func hostResolve(cmd *cobra.Command, args []string) error {
@@ -263,12 +314,12 @@ func hostResolve(cmd *cobra.Command, args []string) error {
 
 	err := decodeJSON(args[0], &service)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	host, err := api.ResolveHost(service)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(host)
@@ -276,24 +327,38 @@ func hostResolve(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostDeployableCmd = &cobra.Command{
-	Use:   "deployable",
-	Short: "Set a host to be depoyable or undeployable",
-	Long:  `Set a host to be depoyable or undeployable. Host ID's are separated by commas when using multiple values, see example`,
-	Example: `
-privx-cli hosts deployable [access flags] --id <HOST-ID>,<HOST-ID> --status=true
-	`,
-	SilenceUsage: true,
-	RunE:         hostDeployable,
+func hostDeployableCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "deployable",
+		Short: "Set a host to be depoyable or undeployable",
+		Long:  `Set a host to be depoyable or undeployable. Host ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli hosts deployable [access flags] --id <HOST-ID>,<HOST-ID> --status=true
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostDeployable(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.hostID, "id", "", "host ID")
+	flags.BoolVar(&options.deployStatus, "status", false, "host deploy status")
+	cmd.MarkFlagRequired("id")
+	cmd.MarkFlagRequired("status")
+
+	return cmd
 }
 
-func hostDeployable(cmd *cobra.Command, args []string) error {
+func hostDeployable(options hostOptions) error {
 	api := hoststore.New(curl())
 
-	for _, id := range strings.Split(hostID, ",") {
-		err := api.UpdateDeployStatus(id, deployStatus)
+	for _, id := range strings.Split(options.hostID, ",") {
+		err := api.UpdateDeployStatus(id, options.deployStatus)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		} else {
 			fmt.Println(id)
 		}
@@ -304,24 +369,38 @@ func hostDeployable(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostDisableCmd = &cobra.Command{
-	Use:   "disabled",
-	Short: "Enable/disable host",
-	Long:  `Enable(false)/disable(true) host. Host ID's are separated by commas when using multiple values, see example`,
-	Example: `
-privx-cli hosts disabled [access flags] --id <HOST-ID>,<HOST-ID> --status=true
-	`,
-	SilenceUsage: true,
-	RunE:         hostDisable,
+func hostDisableCmd() *cobra.Command {
+	options := hostOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "disabled",
+		Short: "Enable/disable host",
+		Long:  `Enable(false)/disable(true) host. Host ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli hosts disabled [access flags] --id <HOST-ID>,<HOST-ID> --status=true
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostDisable(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.hostID, "id", "", "host ID")
+	flags.BoolVar(&options.disabledStatus, "status", false, "host disabled status")
+	cmd.MarkFlagRequired("id")
+	cmd.MarkFlagRequired("status")
+
+	return cmd
 }
 
-func hostDisable(cmd *cobra.Command, args []string) error {
+func hostDisable(options hostOptions) error {
 	api := hoststore.New(curl())
 
-	for _, id := range strings.Split(hostID, ",") {
-		err := api.UpdateDisabledHostStatus(id, disabledStatus)
+	for _, id := range strings.Split(options.hostID, ",") {
+		err := api.UpdateDisabledHostStatus(id, options.disabledStatus)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return err
 		} else {
 			fmt.Println(id)
 		}
@@ -332,23 +411,29 @@ func hostDisable(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostSettingListCmd = &cobra.Command{
-	Use:   "settings",
-	Short: "Get the default service options",
-	Long:  `Get the default service options`,
-	Example: `
-privx-cli hosts settings [access flags]
-	`,
-	SilenceUsage: true,
-	RunE:         hostSettingList,
+func hostSettingListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "settings",
+		Short: "Get the default service options",
+		Long:  `Get the default service options`,
+		Example: `
+	privx-cli hosts settings [access flags]
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostSettingList()
+		},
+	}
+
+	return cmd
 }
 
-func hostSettingList(cmd *cobra.Command, args []string) error {
+func hostSettingList() error {
 	api := hoststore.New(curl())
 
 	settings, err := api.ServiceOptions()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return err
 	}
 
 	return stdout(settings)
@@ -356,18 +441,24 @@ func hostSettingList(cmd *cobra.Command, args []string) error {
 
 //
 //
-var hostsDeployCmd = &cobra.Command{
-	Use:   "deploy",
-	Short: "Creates target hosts deployment config",
-	Long:  `Creates target hosts deployment config`,
-	Example: `
-privx-cli hosts deploy [access flags] <NAME>
-	`,
-	SilenceUsage: true,
-	RunE:         hostDeploy,
+func hostsDeployCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deploy",
+		Short: "Creates target hosts deployment config",
+		Long:  `Creates target hosts deployment config`,
+		Example: `
+	privx-cli hosts deploy [access flags] <NAME>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return hostDeploy(args)
+		},
+	}
+
+	return cmd
 }
 
-func hostDeploy(cmd *cobra.Command, args []string) error {
+func hostDeploy(args []string) error {
 	if len(args) < 1 {
 		return errors.New("requires name of deployment configuration as an argument")
 	}
@@ -378,7 +469,6 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 
 	seq, err := store.TrustedClients()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return err
 	}
 
@@ -388,7 +478,6 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 			userstore.HostProvisioning(name),
 		)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			return err
 		}
 	}
@@ -396,7 +485,6 @@ func hostDeploy(cmd *cobra.Command, args []string) error {
 	conf := apiConfig.New(curl)
 	file, err := conf.ConfigDeploy(cli)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return err
 	}
 
