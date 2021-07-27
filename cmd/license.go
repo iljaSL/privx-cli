@@ -39,7 +39,7 @@ func licenseListCmd() *cobra.Command {
 	cmd.AddCommand(licenseSetCmd())
 	cmd.AddCommand(licenseRefreshCmd())
 	cmd.AddCommand(licenseStatisticsSetCmd())
-	cmd.AddCommand(licenseDeactivateCmd())
+	cmd.AddCommand(licenseUnsetCmd())
 
 	return cmd
 }
@@ -87,7 +87,7 @@ func licenseSet(options licenseOptions) error {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 //
@@ -155,24 +155,24 @@ func licenseStatisticsSet(options licenseOptions) error {
 
 //
 //
-func licenseDeactivateCmd() *cobra.Command {
+func licenseUnsetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deactivate",
+		Use:   "unset",
 		Short: "Deactivate license",
 		Long:  `Deactivate PrivX license`,
 		Example: `
-	privx-cli license deactivate [access flags]
+	privx-cli license unset [access flags]
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return licenseDeactivate()
+			return licenseUnset()
 		},
 	}
 
 	return cmd
 }
 
-func licenseDeactivate() error {
+func licenseUnset() error {
 	api := licensemanager.New(curl())
 
 	err := api.DeactivateLicense()
