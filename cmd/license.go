@@ -158,8 +158,8 @@ func licenseStatisticsSet(options licenseOptions) error {
 func licenseUnsetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "unset",
-		Short: "Deactivate license",
-		Long:  `Deactivate PrivX license`,
+		Short: "Unset license",
+		Long:  `Unset PrivX license`,
 		Example: `
 	privx-cli license unset [access flags]
 		`,
