@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -16,72 +17,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+type vaultOptions struct {
 	secretName   string
 	keywords     string
 	sortkey      string
+	sortdir      string
 	vaultReadTo  []string
 	vaultWriteTo []string
-)
+	limit        int
+	offset       int
+}
 
 func init() {
-	rootCmd.AddCommand(secretListCmd)
-	secretListCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	secretListCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-
-	secretListCmd.AddCommand(secretShowCmd)
-	secretShowCmd.Flags().StringVar(&secretName, "name", "", "secret name")
-	secretShowCmd.MarkFlagRequired("name")
-
-	secretListCmd.AddCommand(secretCreateCmd)
-	secretCreateCmd.Flags().StringVar(&secretName, "name", "", "secret name")
-	secretCreateCmd.Flags().StringArrayVar(&vaultReadTo, "allow-read-to", []string{}, "read by role ID")
-	secretCreateCmd.Flags().StringArrayVar(&vaultWriteTo, "allow-write-to", []string{}, "write by role ID")
-	secretCreateCmd.MarkFlagRequired("name")
-	secretCreateCmd.MarkFlagRequired("read-by")
-	secretCreateCmd.MarkFlagRequired("write-by")
-
-	secretListCmd.AddCommand(vaultUpdateCmd)
-	vaultUpdateCmd.Flags().StringVar(&secretName, "name", "", "secret name")
-	vaultUpdateCmd.Flags().StringArrayVar(&vaultReadTo, "allow-read-to", []string{}, "read by role ID")
-	vaultUpdateCmd.Flags().StringArrayVar(&vaultWriteTo, "allow-write-to", []string{}, "write by role ID")
-	vaultUpdateCmd.MarkFlagRequired("name")
-
-	secretListCmd.AddCommand(secretDeleteCmd)
-	secretDeleteCmd.Flags().StringVar(&secretName, "name", "", "secret name")
-	secretDeleteCmd.MarkFlagRequired("name")
-
-	secretListCmd.AddCommand(secretMetadataShowCmd)
-	secretMetadataShowCmd.Flags().StringVar(&secretName, "name", "", "secret name")
-	secretMetadataShowCmd.MarkFlagRequired("name")
-
-	secretListCmd.AddCommand(secretSearchCmd)
-	secretSearchCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	secretSearchCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-	secretSearchCmd.Flags().StringVar(&sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	secretSearchCmd.Flags().StringVar(&sortkey, "sortkey", "", "sort object by name, updated, or created.")
-	secretSearchCmd.Flags().StringVar(&keywords, "keywords", "", "comma or space-separated string to search in secret's names")
-
-	secretListCmd.AddCommand(secretSchemasShowCmd)
+	rootCmd.AddCommand(secretListCmd())
 }
 
 //
 //
-var secretListCmd = &cobra.Command{
-	Use:   "secrets",
-	Short: "PrivX secrets",
-	Long:  `List and manage PrivX secrets`,
-	Example: `
-privx-cli secrets [access flags] --offset <OFFSET> --limit <LIMIT>
-	`,
-	SilenceUsage: true,
-	RunE:         secretList,
+func secretListCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "secrets",
+		Short: "PrivX secrets",
+		Long:  `List and manage PrivX secrets`,
+		Example: `
+	privx-cli secrets [access flags] --offset <OFFSET> --limit <LIMIT>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretList(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+
+	cmd.AddCommand(secretShowCmd())
+	cmd.AddCommand(secretCreateCmd())
+	cmd.AddCommand(vaultUpdateCmd())
+	cmd.AddCommand(secretDeleteCmd())
+	cmd.AddCommand(secretMetadataShowCmd())
+	cmd.AddCommand(secretSearchCmd())
+	cmd.AddCommand(secretSchemasShowCmd())
+
+	return cmd
 }
 
-func secretList(cmd *cobra.Command, args []string) error {
+func secretList(options vaultOptions) error {
 	api := vault.New(curl())
 
-	secrets, err := api.Secrets(offset, limit)
+	secrets, err := api.Secrets(options.offset, options.limit)
 	if err != nil {
 		return err
 	}
@@ -91,22 +78,87 @@ func secretList(cmd *cobra.Command, args []string) error {
 
 //
 //
-var secretShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Get a secret",
-	Long:  `Get a secret`,
-	Example: `
-privx-cli secrets show [access flags] --name <SECRET-NAME>
-	`,
-	SilenceUsage: true,
-	RunE:         secretShow,
+func secretShowCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Get a secret",
+		Long:  `Get a secret. Secret Name's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli secrets show [access flags] --name <SECRET-NAME>,<SECRET-NAME>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretShow(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.secretName, "name", "", "secret name")
+	cmd.MarkFlagRequired("name")
+
+	return cmd
 }
 
-func secretShow(cmd *cobra.Command, args []string) error {
+func secretShow(options vaultOptions) error {
 	api := vault.New(curl())
+	secrets := []vault.Secret{}
 
-	secret, err := api.Secret(secretName)
+	for _, name := range strings.Split(options.secretName, ",") {
+		secret, err := api.Secret(name)
+		if err != nil {
+			return err
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	return stdout(secrets)
+}
+
+//
+//
+func secretCreateCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create new secret",
+		Long:  `Create new secret`,
+		Example: `
+	privx-cli secrets create [access flags] --name <SECRET-NAME>
+		--allow-read-to <ROLE-ID>
+		--allow-write-to <ROLE-ID>
+		...
+		JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretCreate(args, options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.secretName, "name", "", "secret name")
+	flags.StringArrayVar(&options.vaultReadTo, "allow-read-to", []string{}, "read by role ID")
+	flags.StringArrayVar(&options.vaultWriteTo, "allow-write-to", []string{}, "write by role ID")
+	cmd.MarkFlagRequired("name")
+	cmd.MarkFlagRequired("read-by")
+	cmd.MarkFlagRequired("write-by")
+
+	return cmd
+}
+
+func secretCreate(args []string, options vaultOptions) error {
+	secret, err := readJSON(args[0])
 	if err != nil {
+		return err
+	}
+
+	api := vault.New(curl())
+	if err := api.CreateSecret(options.secretName, options.vaultReadTo,
+		options.vaultWriteTo, secret); err != nil {
 		return err
 	}
 
@@ -115,81 +167,64 @@ func secretShow(cmd *cobra.Command, args []string) error {
 
 //
 //
-var secretCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create new secret",
-	Long:  `Create new secret`,
-	Example: `
-privx-cli secrets create [access flags] --name <SECRET-NAME> 
-	--allow-read-to <ROLE-ID>
-	--allow-write-to <ROLE-ID>
-	...
-	JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         secretCreate,
+func vaultUpdateCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update secret",
+		Long:  `Update existing secret`,
+		Example: `
+	privx-cli secrets update [access flags] --name <SECRET-NAME> JSON-FILE
+
+	privx-cli secrets update [access flags] --name <SECRET-NAME>
+		--allow-read-to <ROLE-ID>
+		--allow-write-to <ROLE-ID>
+		...
+		JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretUpdate(options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.secretName, "name", "", "secret name")
+	flags.StringArrayVar(&options.vaultReadTo, "allow-read-to", []string{}, "read by role ID")
+	flags.StringArrayVar(&options.vaultWriteTo, "allow-write-to", []string{}, "write by role ID")
+	cmd.MarkFlagRequired("name")
+
+	return cmd
 }
 
-func secretCreate(cmd *cobra.Command, args []string) error {
+func secretUpdate(options vaultOptions, args []string) error {
 	secret, err := readJSON(args[0])
 	if err != nil {
 		return err
 	}
 
 	api := vault.New(curl())
-	if err := api.CreateSecret(secretName, vaultReadTo, vaultWriteTo, secret); err != nil {
-		return err
-	}
-
-	return stdout(secret)
-}
-
-//
-//
-var vaultUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update secret",
-	Long:  `Update existing secret`,
-	Example: `
-privx-cli secrets update [access flags] --name <SECRET-NAME> JSON-FILE
-
-privx-cli secrets update [access flags] --name <SECRET-NAME>
-	--allow-read-to <ROLE-ID>
-	--allow-write-to <ROLE-ID>
-	...
-	JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         secretUpdate,
-}
-
-func secretUpdate(cmd *cobra.Command, args []string) error {
-	secret, err := readJSON(args[0])
+	bag, err := api.Secret(options.secretName)
 	if err != nil {
 		return err
 	}
 
-	api := vault.New(curl())
-	bag, err := api.Secret(secretName)
-	if err != nil {
-		return err
-	}
-
-	if len(vaultReadTo) == 0 {
+	if len(options.vaultReadTo) == 0 {
 		for _, ref := range bag.AllowRead {
-			vaultReadTo = append(vaultReadTo, ref.ID)
+			options.vaultReadTo = append(options.vaultReadTo, ref.ID)
 		}
 	}
 
-	if len(vaultWriteTo) == 0 {
+	if len(options.vaultWriteTo) == 0 {
 		for _, ref := range bag.AllowWrite {
-			vaultWriteTo = append(vaultWriteTo, ref.ID)
+			options.vaultWriteTo = append(options.vaultWriteTo, ref.ID)
 		}
 	}
 
-	if err := api.UpdateSecret(secretName, vaultReadTo, vaultWriteTo, secret); err != nil {
+	if err := api.UpdateSecret(options.secretName, options.vaultReadTo,
+		options.vaultWriteTo, secret); err != nil {
 		return err
 	}
 
@@ -198,88 +233,145 @@ func secretUpdate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var secretDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete secret",
-	Long:  `Delete secret from PrivX Vault`,
-	Example: `
-privx-cli vault delete [access flags] --name <SECRET-NAME>
-	`,
-	SilenceUsage: true,
-	RunE:         secretDelete,
+func secretDeleteCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete secret",
+		Long:  `Delete secret from PrivX Vault. Secret Name's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli vault delete [access flags] --name <SECRET-NAME>,<SECRET-NAME>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretDelete(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.secretName, "name", "", "secret name")
+	cmd.MarkFlagRequired("name")
+
+	return cmd
 }
 
-func secretDelete(cmd *cobra.Command, args []string) error {
+func secretDelete(options vaultOptions) error {
 	api := vault.New(curl())
 
-	err := api.DeleteSecret(secretName)
+	for _, name := range strings.Split(options.secretName, ",") {
+		err := api.DeleteSecret(name)
+		if err != nil {
+			return err
+		} else {
+			fmt.Println(name)
+		}
+	}
 
-	return err
+	return nil
 }
 
 //
 //
-var secretMetadataShowCmd = &cobra.Command{
-	Use:   "metadata",
-	Short: "Get a secrets metadata",
-	Long:  `Get a secrets metadata`,
-	Example: `
-privx-cli secrets metadata [access flags] --name <SECRET-NAME>
-	`,
-	SilenceUsage: true,
-	RunE:         secretMetadataShow,
+func secretMetadataShowCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "metadata",
+		Short: "Get a secrets metadata",
+		Long:  `Get a secrets metadata. Secret Name's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli secrets metadata [access flags] --name <SECRET-NAME>,<SECRET-NAME>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretMetadataShow(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.secretName, "name", "", "secret name")
+	cmd.MarkFlagRequired("name")
+
+	return cmd
 }
 
-func secretMetadataShow(cmd *cobra.Command, args []string) error {
+func secretMetadataShow(options vaultOptions) error {
+	api := vault.New(curl())
+	secrets := []vault.Secret{}
+
+	for _, name := range strings.Split(options.secretName, ",") {
+		secret, err := api.SecretMetadata(name)
+		if err != nil {
+			return err
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	return stdout(secrets)
+}
+
+//
+//
+func secretSearchCmd() *cobra.Command {
+	options := vaultOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "search",
+		Short: "Search for secrets",
+		Long:  `Search for secrets`,
+		Example: `
+	privx-cli secrets search [access flags] --offset <OFFSET> --keywords "<KEYWORD>,<KEYWORD>"
+	privx-cli secrets search [access flags] --limit <LIMIT> --sortkey <SORTKEY>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretSearch(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.sortkey, "sortkey", "", "sort object by name, updated, or created.")
+	flags.StringVar(&options.keywords, "keywords", "", "comma or space-separated string to search in secret's names")
+
+	return cmd
+}
+
+func secretSearch(options vaultOptions) error {
 	api := vault.New(curl())
 
-	meta, err := api.SecretMetadata(secretName)
+	secrets, err := api.SearchSecrets(options.offset, options.limit, options.keywords,
+		options.sortkey, strings.ToUpper(options.sortdir))
 	if err != nil {
 		return err
 	}
 
-	return stdout(meta)
+	return stdout(secrets)
 }
 
 //
 //
-var secretSearchCmd = &cobra.Command{
-	Use:   "search",
-	Short: "Search for secrets",
-	Long:  `Search for secrets`,
-	Example: `
-privx-cli secrets search [access flags] --offset <OFFSET> --keywords "<KEYWORD>,<KEYWORD>"
-privx-cli secrets search [access flags] --limit <LIMIT> --sortkey <SORTKEY>
-	`,
-	SilenceUsage: true,
-	RunE:         secretSearch,
-}
-
-func secretSearch(cmd *cobra.Command, args []string) error {
-	api := vault.New(curl())
-
-	secret, err := api.SearchSecrets(offset, limit, keywords, sortkey, strings.ToUpper(sortdir))
-	if err != nil {
-		return err
+func secretSchemasShowCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "schemas",
+		Short: "Returns the defined schemas",
+		Long:  `Returns the defined schemas`,
+		Example: `
+	privx-cli secrets schemas [access flags]
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return secretSchemasShow()
+		},
 	}
 
-	return stdout(secret)
+	return cmd
 }
 
-//
-//
-var secretSchemasShowCmd = &cobra.Command{
-	Use:   "schemas",
-	Short: "Returns the defined schemas",
-	Long:  `Returns the defined schemas`,
-	Example: `
-privx-cli secrets schemas [access flags]
-	`,
-	SilenceUsage: true,
-	RunE:         secretSchemasShow,
-}
-
-func secretSchemasShow(cmd *cobra.Command, args []string) error {
+func secretSchemasShow() error {
 	api := vault.New(curl())
 
 	schemas, err := api.VaultSchemas()
