@@ -12,22 +12,22 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(instanceListCmd())
+	rootCmd.AddCommand(instanceShowCmd())
 }
 
 //
 //
-func instanceListCmd() *cobra.Command {
+func instanceShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "instance",
-		Short: "List and manage the whole instance",
-		Long:  `List and manage the whole instance`,
+		Short: "Show instance status and restart instance",
+		Long:  `Show instance status and restart instance`,
 		Example: `
 	privx-cli instance [access flags]
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return instanceList()
+			return instanceShow()
 		},
 	}
 
@@ -36,7 +36,7 @@ func instanceListCmd() *cobra.Command {
 	return cmd
 }
 
-func instanceList() error {
+func instanceShow() error {
 	api := monitor.New(curl())
 
 	status, err := api.InstanceStatus()
@@ -51,11 +51,11 @@ func instanceList() error {
 //
 func instanceTerminateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "terminate",
-		Short: "Terminate PrivX instances",
-		Long:  `Terminate PrivX instances`,
+		Use:   "reset",
+		Short: "Reset PrivX instances",
+		Long:  `Reset PrivX instances`,
 		Example: `
-	privx-cli instance terminate [access flags]
+	privx-cli instance reset [access flags]
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

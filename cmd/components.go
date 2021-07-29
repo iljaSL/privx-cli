@@ -24,8 +24,8 @@ func init() {
 func componentsListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "components",
-		Short: "List and manage privx components",
-		Long:  `List and manage privx components`,
+		Short: "List and show components details",
+		Long:  `List and show components details`,
 		Example: `
 	privx-cli components [access flags]
 		`,
