@@ -378,11 +378,9 @@ func connectionAccessRoleRevoke(options connectionOptions) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if options.connID == "" {
+	} else {
 		if !options.force {
-			fmt.Println("You are about to delete the roles from ALL the connections. Please use the --force | -f flag to proceed with the command")
+			fmt.Fprintln(os.Stderr, "Error: this action will revoke data access rights from this role to all connections.\nUse --force | -f flag to revoke data access to all connections or use --conn-id to revoke data access to a specific connection")
 			os.Exit(1)
 		} else {
 			err := api.RevokeAccessRoleFromAllConnections(options.roleID)
