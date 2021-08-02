@@ -7,6 +7,8 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/connectionmanager"
@@ -14,20 +16,20 @@ import (
 )
 
 type connectionOptions struct {
-	channID   string
-	fileID    string
-	connID    string
-	sessionID string
-	roleID    string
-	userID    string
-	hostID    string
-	fileName  string
-	sortkey   string
-	sortdir   string
-	format    string
-	filter    string
-	offset    int
-	limit     int
+	channID  string
+	fileID   string
+	connID   string
+	roleID   string
+	userID   string
+	hostID   string
+	fileName string
+	sortkey  string
+	sortdir  string
+	format   string
+	filter   string
+	offset   int
+	limit    int
+	force    bool
 }
 
 func init() {
@@ -60,17 +62,12 @@ func connectionListCmd() *cobra.Command {
 
 	cmd.AddCommand(connectionSearchCmd())
 	cmd.AddCommand(connectionShowCmd())
-	cmd.AddCommand(sessionIDFileDownloadCreateCmd())
 	cmd.AddCommand(storedFileDownloadCmd())
-	cmd.AddCommand(sessionIDTrailLogDownloadCreateCmd())
 	cmd.AddCommand(trailLogDownloadCmd())
-	cmd.AddCommand(accessRoleShowCmd())
+	cmd.AddCommand(accessRoleListCmd())
 	cmd.AddCommand(connectionAccessRoleGrantCmd())
 	cmd.AddCommand(connectionAccessRoleRevokeCmd())
-	cmd.AddCommand(allConnectionAccessRoleRevokeCmd())
 	cmd.AddCommand(connectionTerminateCmd())
-	cmd.AddCommand(connectionByTargetHostTerminateCmd())
-	cmd.AddCommand(connectionByUserTerminateCmd())
 
 	return cmd
 }
@@ -146,7 +143,7 @@ func connectionShowCmd() *cobra.Command {
 		Short: "Get connection by ID",
 		Long:  `Get connection by ID. Connection ID's are separated by commas when using multiple values, see example`,
 		Example: `
-	privx-cli connections show [access flags] --id <CONN-ID>,<CONN-ID>
+	privx-cli connections show [access flags] --conn-id <CONN-ID>,<CONN-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -155,8 +152,8 @@ func connectionShowCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	cmd.MarkFlagRequired("conn-id")
 
 	return cmd
 }
@@ -178,46 +175,6 @@ func connectionShow(options connectionOptions) error {
 
 //
 //
-func sessionIDFileDownloadCreateCmd() *cobra.Command {
-	options := connectionOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "create-session-id-file",
-		Short: "Create session ID for trail stored file download",
-		Long:  `Create session ID for trail stored file download`,
-		Example: `
-	privx-cli connections session-id-file [access flags] --id <CONN-ID> --fid <FILE-ID> --chid <CHANNEL-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return sessionIDFileDownloadCreate(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.channID, "chid", "", "channel ID")
-	flags.StringVar(&options.fileID, "fid", "", "file ID")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("chid")
-	cmd.MarkFlagRequired("fid")
-
-	return cmd
-}
-
-func sessionIDFileDownloadCreate(options connectionOptions) error {
-	api := connectionmanager.New(curl())
-
-	sessionID, err := api.CreateSessionIDFileDownload(options.connID, options.channID, options.fileID)
-	if err != nil {
-		return err
-	}
-
-	return stdout(sessionID)
-}
-
-//
-//
 func storedFileDownloadCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -226,7 +183,7 @@ func storedFileDownloadCmd() *cobra.Command {
 		Short: "Download trail stored file",
 		Long:  `Download trail stored file`,
 		Example: `
-	privx-cli connections download-file [access flags] --id <CONN-ID> --fid <FILE-ID> --chid <CHANNEL-ID> --name <FILE-NAME>
+	privx-cli connections download-file [access flags] --conn-id <CONN-ID> --file-id <FILE-ID> --channel-id <CHANNEL-ID> --name <FILE-NAME>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -235,68 +192,33 @@ func storedFileDownloadCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.channID, "chid", "", "channel ID")
-	flags.StringVar(&options.fileID, "fid", "", "file ID")
-	flags.StringVar(&options.sessionID, "sid", "", "session ID")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	flags.StringVar(&options.channID, "channel-id", "", "channel ID")
+	flags.StringVar(&options.fileID, "file-id", "", "file ID")
 	flags.StringVar(&options.fileName, "name", "", "file name")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("chid")
-	cmd.MarkFlagRequired("fid")
-	cmd.MarkFlagRequired("sid")
+	cmd.MarkFlagRequired("conn-id")
+	cmd.MarkFlagRequired("channel-id")
+	cmd.MarkFlagRequired("file-id")
 	cmd.MarkFlagRequired("name")
 
 	return cmd
 }
 
 func storedFileDownload(options connectionOptions) error {
-	store := connectionmanager.New(curl())
+	api := connectionmanager.New(curl())
 
-	err := store.DownloadStoredFile(options.connID, options.channID, options.fileID,
-		options.sessionID, options.fileName)
+	sessionID, err := api.CreateSessionIDFileDownload(options.connID, options.channID, options.fileID)
+	if err != nil {
+		return err
+	}
+
+	err = api.DownloadStoredFile(options.connID, options.channID, options.fileID,
+		sessionID, options.fileName)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-//
-//
-func sessionIDTrailLogDownloadCreateCmd() *cobra.Command {
-	options := connectionOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "create-session-id-log",
-		Short: "Create session ID for trail log download",
-		Long:  `Create session ID for trail log download`,
-		Example: `
-	privx-cli connections create-session-id-log [access flags] --id <CONN-ID> --chid <CHANNEL-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return sessionIDTrailLogDownloadCreate(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.channID, "chid", "", "channel ID")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("chid")
-
-	return cmd
-}
-
-func sessionIDTrailLogDownloadCreate(options connectionOptions) error {
-	api := connectionmanager.New(curl())
-
-	sessionID, err := api.CreateSessionIDTrailLog(options.connID, options.channID)
-	if err != nil {
-		return err
-	}
-
-	return stdout(sessionID)
 }
 
 //
@@ -309,7 +231,7 @@ func trailLogDownloadCmd() *cobra.Command {
 		Short: "Download trail log",
 		Long:  `Download trail log`,
 		Example: `
-	privx-cli connections download-log [access flags] --id <CONN-ID> --chid <CHANNEL-ID> --sid <SESSION-ID> --name <FILE-NAME>
+	privx-cli connections download-log [access flags] --conn-id <CONN-ID> --channel-id <CHANNEL-ID> --sid <SESSION-ID> --name <FILE-NAME>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -318,15 +240,13 @@ func trailLogDownloadCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.channID, "chid", "", "channel ID")
-	flags.StringVar(&options.sessionID, "sid", "", "session ID")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	flags.StringVar(&options.channID, "channel-id", "", "channel ID")
 	flags.StringVar(&options.fileName, "name", "", "file name")
 	flags.StringVar(&options.format, "format", "", "trail log format, json or hex")
 	flags.StringVar(&options.filter, "filter", "", "trail log event filter")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("chid")
-	cmd.MarkFlagRequired("sid")
+	cmd.MarkFlagRequired("conn-id")
+	cmd.MarkFlagRequired("channel-id")
 	cmd.MarkFlagRequired("name")
 
 	return cmd
@@ -335,7 +255,12 @@ func trailLogDownloadCmd() *cobra.Command {
 func trailLogDownload(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
-	err := api.DownloadTrailLog(options.connID, options.channID, options.sessionID,
+	sessionID, err := api.CreateSessionIDTrailLog(options.connID, options.channID)
+	if err != nil {
+		return err
+	}
+
+	err = api.DownloadTrailLog(options.connID, options.channID, sessionID,
 		options.format, options.filter, options.fileName)
 	if err != nil {
 		return err
@@ -346,30 +271,30 @@ func trailLogDownload(options connectionOptions) error {
 
 //
 //
-func accessRoleShowCmd() *cobra.Command {
+func accessRoleListCmd() *cobra.Command {
 	options := connectionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "roles",
+		Use:   "access-roles",
 		Short: "Get saved access roles for a connection",
 		Long:  `Get saved access roles for a connection`,
 		Example: `
-	privx-cli connections roles [access flags] --id <CONN-ID>
+	privx-cli connections access-roles [access flags] --conn-id <CONN-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return accessRoleShow(options)
+			return accessRoleList(options)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	cmd.MarkFlagRequired("conn-id")
 
 	return cmd
 }
 
-func accessRoleShow(options connectionOptions) error {
+func accessRoleList(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
 	roles, err := api.AccessRoles(options.connID)
@@ -386,11 +311,11 @@ func connectionAccessRoleGrantCmd() *cobra.Command {
 	options := connectionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "grant-access-role-permission",
-		Short: "Grant a permission for a role for a connection",
-		Long:  `Grant a permission for a role for a connection`,
+		Use:   "grant-access-role",
+		Short: "Add the role to a list of roles that can explicitly access this connection data",
+		Long:  `Add the role to a list of roles that can explicitly access this connection data`,
 		Example: `
-	privx-cli connections grant-role-permission [access flags] --id <CONN-ID> --rid <ROLE-ID>
+	privx-cli connections grant-role [access flags] --conn-id <CONN-ID> --role-id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -399,10 +324,10 @@ func connectionAccessRoleGrantCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.roleID, "rid", "", "role ID")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("rid")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	cmd.MarkFlagRequired("conn-id")
+	cmd.MarkFlagRequired("role-id")
 
 	return cmd
 }
@@ -424,11 +349,11 @@ func connectionAccessRoleRevokeCmd() *cobra.Command {
 	options := connectionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "revoke-role-from-connection",
-		Short: "Revoke a permission for a role from a connection",
-		Long:  `Revoke a permission for a role from a connection`,
+		Use:   "revoke-access-role",
+		Short: "Remove the role from a list of roles that can explicitly access this connection data",
+		Long:  `Remove the role from a list of roles that can explicitly access this connection data`,
 		Example: `
-	privx-cli connections revoke-role-from-connection [access flags] --id <CONN-ID> --rid <ROLE-ID>
+	privx-cli connections revoke-access-role [access flags] --conn-id <CONN-ID> --role-id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -437,10 +362,10 @@ func connectionAccessRoleRevokeCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	flags.StringVar(&options.roleID, "rid", "", "role ID")
-	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("rid")
+	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	flags.BoolVarP(&options.force, "force", "f", false, "force command")
+	cmd.MarkFlagRequired("role-id")
 
 	return cmd
 }
@@ -448,45 +373,23 @@ func connectionAccessRoleRevokeCmd() *cobra.Command {
 func connectionAccessRoleRevoke(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
-	err := api.RevokeAccessRoleFromConnection(options.connID, options.roleID)
-	if err != nil {
-		return err
+	if options.connID != "" {
+		err := api.RevokeAccessRoleFromConnection(options.connID, options.roleID)
+		if err != nil {
+			return err
+		}
 	}
 
-	return nil
-}
-
-//
-//
-func allConnectionAccessRoleRevokeCmd() *cobra.Command {
-	options := connectionOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "revoke-role-from-all-connections",
-		Short: "Revoke permissions for a role from connections",
-		Long:  `Revoke permissions for a role from connections`,
-		Example: `
-	privx-cli connections revoke-role-from-all-connections [access flags] --rid <ROLE-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return allConnectionAccessRoleRevoke(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "rid", "", "role ID")
-	cmd.MarkFlagRequired("rid")
-
-	return cmd
-}
-
-func allConnectionAccessRoleRevoke(options connectionOptions) error {
-	api := connectionmanager.New(curl())
-
-	err := api.RevokeAccessRoleFromAllConnections(options.roleID)
-	if err != nil {
-		return err
+	if options.connID == "" {
+		if !options.force {
+			fmt.Println("You are about to delete the roles from ALL the connections. Please use the --force | -f flag to proceed with the command")
+			os.Exit(1)
+		} else {
+			err := api.RevokeAccessRoleFromAllConnections(options.roleID)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -498,11 +401,11 @@ func connectionTerminateCmd() *cobra.Command {
 	options := connectionOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "terminate-connection",
+		Use:   "terminate",
 		Short: "Terminate connection by ID",
 		Long:  `Terminate connection by ID`,
 		Example: `
-	privx-cli connections terminate-connection [access flags] --id <CONN-ID>
+	privx-cli connections terminate [access flags] --conn-id <CONN-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -511,13 +414,28 @@ func connectionTerminateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "id", "", "connection ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.connID, "conn-id", "", "terminate connection by ID")
+	flags.StringVar(&options.hostID, "by-target", "", "terminate connection by host ID")
+	flags.StringVar(&options.userID, "by-user", "", "terminate connection by user ID")
 
 	return cmd
 }
 
 func connectionTerminate(options connectionOptions) error {
+	if (options == connectionOptions{}) {
+		fmt.Println("Specify at least one flag for the termination type of the connection: --conn-id, --by-target or --by-user")
+	} else if options.hostID != "" {
+		terminateConnectionByTargerHost(options)
+	} else if options.userID != "" {
+		terminateConnectionByUser(options)
+	} else if options.connID != "" {
+		terminateConnectionByConnection(options)
+	}
+
+	return nil
+}
+
+func terminateConnectionByConnection(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
 	err := api.TerminateConnection(options.connID)
@@ -528,32 +446,7 @@ func connectionTerminate(options connectionOptions) error {
 	return nil
 }
 
-//
-//
-func connectionByTargetHostTerminateCmd() *cobra.Command {
-	options := connectionOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "terminate-host-connection",
-		Short: "Terminate connection from host",
-		Long:  `Terminate connection from host`,
-		Example: `
-	privx-cli terminate-host-connection [access flags] -hid <HOST-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return connectionByTargetHostTerminate(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.hostID, "hid", "", "host ID")
-	cmd.MarkFlagRequired("hid")
-
-	return cmd
-}
-
-func connectionByTargetHostTerminate(options connectionOptions) error {
+func terminateConnectionByTargerHost(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
 	err := api.TerminateConnectionsByTargetHost(options.hostID)
@@ -564,32 +457,7 @@ func connectionByTargetHostTerminate(options connectionOptions) error {
 	return nil
 }
 
-//
-//
-func connectionByUserTerminateCmd() *cobra.Command {
-	options := connectionOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "terminate-user-connection",
-		Short: "Terminate connection of a user",
-		Long:  `Terminate connection of a user`,
-		Example: `
-	privx-cli connections terminate-user-connection [access flags] --uid <USER-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return connectionByUserTerminate(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "uid", "", "user ID")
-	cmd.MarkFlagRequired("uid")
-
-	return cmd
-}
-
-func connectionByUserTerminate(options connectionOptions) error {
+func terminateConnectionByUser(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
 	err := api.TerminateConnectionsByUser(options.userID)
