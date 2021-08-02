@@ -276,8 +276,8 @@ func accessRoleListCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "access-roles",
-		Short: "Get saved access roles for a connection",
-		Long:  `Get saved access roles for a connection`,
+		Short: "List access roles for a connection",
+		Long:  `List access roles for a connection`,
 		Example: `
 	privx-cli connections access-roles [access flags] --conn-id <CONN-ID>
 		`,
