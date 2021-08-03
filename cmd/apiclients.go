@@ -7,78 +7,86 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
 
-var (
+type apiClientOptions struct {
 	clientID       string
 	apiClientRoles string
 	name           string
-)
+}
 
 func init() {
-	rootCmd.AddCommand(apiClientListCmd)
-
-	apiClientListCmd.AddCommand(apiClientCreateCmd)
-	apiClientCreateCmd.Flags().StringVar(&name, "name", "", "API client name")
-	apiClientCreateCmd.Flags().StringVar(&apiClientRoles, "roles", "", "list of roles possessed by the API client")
-
-	apiClientListCmd.AddCommand(apiClientShowCmd)
-	apiClientShowCmd.Flags().StringVar(&clientID, "id", "", "unique API client id")
-	apiClientShowCmd.MarkFlagRequired("id")
-
-	apiClientListCmd.AddCommand(apiClientDeleteCmd)
-	apiClientDeleteCmd.Flags().StringVar(&clientID, "id", "", "unique API client id")
-	apiClientDeleteCmd.MarkFlagRequired("id")
-
-	apiClientListCmd.AddCommand(apiClientUpdateCmd)
-	apiClientUpdateCmd.Flags().StringVar(&clientID, "id", "", "unique API client id")
-	apiClientUpdateCmd.MarkFlagRequired("id")
+	rootCmd.AddCommand(apiClientListCmd())
 }
 
 //
 //
-var apiClientListCmd = &cobra.Command{
-	Use:   "api-clients",
-	Short: "Get API clients",
-	Long:  `Get all API clients`,
-	Example: `
-privx-cli api-clients [access flags]
-	`,
-	SilenceUsage: true,
-	RunE:         apiClientList,
+func apiClientListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "api-clients",
+		Short: "List and manage API clients",
+		Long:  `List and manage API clients`,
+		Example: `
+	privx-cli api-clients [access flags]
+		`,
+		SilenceUsage: true,
+		RunE:         apiClientList,
+	}
+
+	return cmd
 }
 
 func apiClientList(cmd *cobra.Command, args []string) error {
 	api := userstore.New(curl())
-	result, err := api.APIClients()
+
+	clients, err := api.APIClients()
 	if err != nil {
 		return err
 	}
 
-	return stdout(result)
+	cmd.AddCommand(apiClientCreateCmd())
+	cmd.AddCommand(apiClientShowCmd())
+	cmd.AddCommand(apiClientDeleteCmd())
+	cmd.AddCommand(apiClientUpdateCmd())
+
+	return stdout(clients)
 }
 
 //
 //
-var apiClientCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create new API client",
-	Long:  `Create new API client`,
-	Example: `
-privx-cli api-clients create [access flags] --name NAME --roles ROLE-ID,ROLE-ID
-	`,
-	SilenceUsage: true,
-	RunE:         apiClientCreate,
+func apiClientCreateCmd() *cobra.Command {
+	options := apiClientOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create new API client",
+		Long:  `Create new API client. Role ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli api-clients create [access flags] --name <CLIENT-NAME> --roles <ROLE-ID>,<ROLE-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return apiClientCreate(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.name, "name", "", "API client name")
+	flags.StringVar(&options.apiClientRoles, "roles", "", "list of roles possessed by the API client")
+	cmd.MarkFlagRequired("name")
+
+	return cmd
 }
 
-func apiClientCreate(cmd *cobra.Command, args []string) error {
+func apiClientCreate(options apiClientOptions) error {
 	api := userstore.New(curl())
 
-	id, err := api.CreateAPIClient(name, strings.Split(apiClientRoles, ","))
+	id, err := api.CreateAPIClient(options.name, strings.Split(options.apiClientRoles, ","))
 	if err != nil {
 		return err
 	}
@@ -88,64 +96,111 @@ func apiClientCreate(cmd *cobra.Command, args []string) error {
 
 //
 //
-var apiClientShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Get API client by ID",
-	Long:  `Get API client by ID`,
-	Example: `
-privx-cli api-clients show [access flags] --id API-CLIENT-ID
-	`,
-	SilenceUsage: true,
-	RunE:         apiClientShow,
-}
+func apiClientShowCmd() *cobra.Command {
+	options := apiClientOptions{}
 
-func apiClientShow(cmd *cobra.Command, args []string) error {
-	api := userstore.New(curl())
-
-	result, err := api.APIClient(clientID)
-	if err != nil {
-		return err
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Get API client by ID",
+		Long:  `Get API client by ID. API Client ID's are separated by commas when using multiple values, see example`,
+		Example: `
+	privx-cli api-clients show [access flags] --id <API-CLIENT-ID>,<API-CLIENT-ID>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return apiClientShow(options)
+		},
 	}
 
-	return stdout(result)
+	flags := cmd.Flags()
+	flags.StringVar(&options.clientID, "id", "", "API client ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
+}
+
+func apiClientShow(options apiClientOptions) error {
+	api := userstore.New(curl())
+	clients := []userstore.APIClient{}
+
+	for _, id := range strings.Split(options.clientID, ",") {
+		client, err := api.APIClient(id)
+		if err != nil {
+			return err
+		}
+		clients = append(clients, *client)
+	}
+
+	return stdout(clients)
 }
 
 //
 //
-var apiClientDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete API client",
-	Long:  `Delete a API client`,
-	Example: `
-privx-cli api-clients delete [access flags] --id API-CLIENT-ID
-	`,
-	SilenceUsage: true,
-	RunE:         apiClientDelete,
+func apiClientDeleteCmd() *cobra.Command {
+	options := apiClientOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "delete",
+		Short: "Delete API client",
+		Long:  `Delete a API client`,
+		Example: `
+	privx-cli api-clients delete [access flags] --id API-CLIENT-ID
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return apiClientDelete(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.clientID, "id", "", "API client ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func apiClientDelete(cmd *cobra.Command, args []string) error {
+func apiClientDelete(options apiClientOptions) error {
 	api := userstore.New(curl())
 
-	err := api.DeleteAPIClient(clientID)
+	for _, id := range strings.Split(options.clientID, ",") {
+		err := api.DeleteAPIClient(id)
+		if err != nil {
+			return err
+		} else {
+			fmt.Println(id)
+		}
+	}
 
-	return err
+	return nil
 }
 
 //
 //
-var apiClientUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update API client",
-	Long:  `Update an existing API client`,
-	Example: `
-privx-cli users local api-clients update [access flags] --id API-CLIENT-ID JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         apiClientUpdate,
+func apiClientUpdateCmd() *cobra.Command {
+	options := apiClientOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "update",
+		Short: "Update API client",
+		Long:  `Update an existing API client`,
+		Example: `
+	privx-cli api-clients update [access flags] --id <API-CLIENT-ID> JSON-FILE
+		`,
+		Args:         cobra.ExactArgs(1),
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return apiClientUpdate(options, args)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&options.clientID, "id", "", "API client ID")
+	cmd.MarkFlagRequired("id")
+
+	return cmd
 }
 
-func apiClientUpdate(cmd *cobra.Command, args []string) error {
+func apiClientUpdate(options apiClientOptions, args []string) error {
 	var apiClient userstore.APIClient
 	api := userstore.New(curl())
 
@@ -154,7 +209,10 @@ func apiClientUpdate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = api.UpdateAPIClient(clientID, &apiClient)
+	err = api.UpdateAPIClient(options.clientID, &apiClient)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
