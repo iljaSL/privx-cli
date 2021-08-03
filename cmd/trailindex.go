@@ -29,8 +29,8 @@ func init() {
 func indexingCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "index",
-		Short: "List and manage SSH trail files",
-		Long: `List and manage SSH trail files. Indexing commands are operation based and not a resource itself.
+		Short: "Create and search SSH connection index",
+		Long: `Create and search SSH connection index. Indexing commands are operation based and not a resource itself.
 The index operation commands can only be applied to SSH trails.`,
 		SilenceUsage: true,
 	}
