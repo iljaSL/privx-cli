@@ -21,24 +21,42 @@ type trailindexOptions struct {
 }
 
 func init() {
-	rootCmd.AddCommand(indexingStatusListCmd())
+	rootCmd.AddCommand(indexingCmd())
 }
 
 //
 //
-func indexingStatusListCmd() *cobra.Command {
+func indexingCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "index",
+		Short: "List and manage SSH trail files",
+		Long: `List and manage SSH trail files. Indexing commands are operation based and not a resource itself.
+The index operation commands can only be applied to SSH trails.`,
+		SilenceUsage: true,
+	}
+
+	cmd.AddCommand(indexingStatusCmd())
+	cmd.AddCommand(contentSearchCmd())
+	cmd.AddCommand(indexingStartCmd())
+
+	return cmd
+}
+
+//
+//
+func indexingStatusCmd() *cobra.Command {
 	options := trailindexOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "trailindex",
-		Short: "List and manage trail files",
-		Long:  `List and manage trail files. Connection ID's are separated by commas when using multiple values, see example`,
+		Use:   "status",
+		Short: "List trail-index status",
+		Long:  `List trail-index status. Connection ID's are separated by commas when using multiple values, see example`,
 		Example: `
-	privx-cli trailindex [access flags] --conn-id <CONNECTION-ID>,<CONNECTION-ID>
+	privx-cli index status [access flags] --conn-id <CONNECTION-ID>,<CONNECTION-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return indexingStatusList(options)
+			return indexingStatus(options)
 		},
 	}
 
@@ -46,14 +64,10 @@ func indexingStatusListCmd() *cobra.Command {
 	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
 	cmd.MarkFlagRequired("conn-id")
 
-	cmd.AddCommand(contentSearchCmd())
-	cmd.AddCommand(indexingStatusShowCmd())
-	cmd.AddCommand(indexingStartCmd())
-
 	return cmd
 }
 
-func indexingStatusList(options trailindexOptions) error {
+func indexingStatus(options trailindexOptions) error {
 	api := trailindex.New(curl())
 
 	status, err := api.IndexingStatuses(strings.Split(options.connID, ","))
@@ -74,8 +88,8 @@ func contentSearchCmd() *cobra.Command {
 		Short: "Search for the content based on the search parameters defined",
 		Long:  `Search for the content based on the search parameters defined`,
 		Example: `
-	privx-cli trailindex [access flags] --offset <OFFSET> --limit <LIMIT> --sortdir <SORTDIR>
-	privx-cli trailindex [access flags] JSON-FILE
+	privx-cli index search [access flags] --offset <OFFSET> --limit <LIMIT> --sortdir <SORTDIR>
+	privx-cli index search [access flags] JSON-FILE
 		`,
 		Args:         cobra.MaximumNArgs(1),
 		SilenceUsage: true,
@@ -88,8 +102,6 @@ func contentSearchCmd() *cobra.Command {
 	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
 	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
 	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC")
-
-	cmd.AddCommand(indexingStatusShowCmd())
 
 	return cmd
 }
@@ -116,42 +128,6 @@ func contentSearch(options trailindexOptions, args []string) error {
 
 //
 //
-func indexingStatusShowCmd() *cobra.Command {
-	options := trailindexOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "show",
-		Short: "Get indexing status of a connection",
-		Long:  `Get indexing status of a connection`,
-		Example: `
-	privx-cli trailindex show [access flags] --conn-id <CONNECTION-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return indexingStatusShow(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.connID, "conn-id", "", "connection ID")
-	cmd.MarkFlagRequired("conn-id")
-
-	return cmd
-}
-
-func indexingStatusShow(options trailindexOptions) error {
-	api := trailindex.New(curl())
-
-	status, err := api.IndexingStatus(options.connID)
-	if err != nil {
-		return err
-	}
-
-	return stdout(status)
-}
-
-//
-//
 func indexingStartCmd() *cobra.Command {
 	options := trailindexOptions{}
 
@@ -160,7 +136,7 @@ func indexingStartCmd() *cobra.Command {
 		Short: "Start indexing connections",
 		Long:  `Start indexing connections. Connection ID's are separated by commas when using multiple values, see example`,
 		Example: `
-	privx-cli trailindex start [access flags] --conn-id <CONNECTION-ID>,<CONNECTION-ID>
+	privx-cli index start [access flags] --conn-id <CONNECTION-ID>,<CONNECTION-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
