@@ -38,6 +38,11 @@ func apiClientListCmd() *cobra.Command {
 		RunE:         apiClientList,
 	}
 
+	cmd.AddCommand(apiClientCreateCmd())
+	cmd.AddCommand(apiClientShowCmd())
+	cmd.AddCommand(apiClientDeleteCmd())
+	cmd.AddCommand(apiClientUpdateCmd())
+
 	return cmd
 }
 
@@ -48,11 +53,6 @@ func apiClientList(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	cmd.AddCommand(apiClientCreateCmd())
-	cmd.AddCommand(apiClientShowCmd())
-	cmd.AddCommand(apiClientDeleteCmd())
-	cmd.AddCommand(apiClientUpdateCmd())
 
 	return stdout(clients)
 }
