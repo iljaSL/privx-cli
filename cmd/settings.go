@@ -8,6 +8,8 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/settings"
@@ -21,88 +23,127 @@ type settingsOptions struct {
 }
 
 func init() {
-	rootCmd.AddCommand(scopeSettingListCmd())
+	rootCmd.AddCommand(settingsCmd())
 }
 
 //
 //
-func scopeSettingListCmd() *cobra.Command {
-	options := settingsOptions{}
-
+func settingsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "settings",
-		Short: "List and manage settings",
-		Long:  `List and manage settings`,
-		Example: `
-	privx-cli settings [access flags] --scope <SCOPE>
-		`,
+		Use:          "settings",
+		Short:        "List and manage settings",
+		Long:         `List and manage settings`,
 		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return scopeSettingList(options)
-		},
 	}
 
-	flags := cmd.Flags()
-	flags.StringVar(&options.scope, "scope", "", "scope setting name")
-	flags.StringVar(&options.merge, "merge", "", "signal whether service specific settings should be merged with shared settings")
-	cmd.MarkFlagRequired("scope")
-
-	cmd.AddCommand(scopeSettingUpdateCmd())
-	cmd.AddCommand(scopeSectionSettingShowCmd())
-	cmd.AddCommand(scopeSectionSettingUpdateCmd())
+	cmd.AddCommand(settingShowCmd())
+	cmd.AddCommand(settingUpdateCmd())
+	cmd.AddCommand(schemaListCmd())
+	cmd.AddCommand(schemaShowCmd())
 
 	return cmd
 }
 
-func scopeSettingList(options settingsOptions) error {
-	api := settings.New(curl())
+//
+//
+func settingShowCmd() *cobra.Command {
+	options := settingsOptions{}
 
-	res, err := api.ScopeSettings(strings.ToUpper(options.scope), options.merge)
-	if err != nil {
-		return err
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "Show settings for a specific scope/section",
+		Long:  `Show settings for a specific scope/section. Scope is by default GLOBAL.`,
+		Example: `
+	privx-cli settings show [access flags] --scope <SCOPE>
+	privx-cli settings show [access flags] --scope <SCOPE> --section <SECTION>
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return settingShow(options)
+		},
 	}
 
-	return stdout(res)
+	flags := cmd.Flags()
+	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
+	flags.StringVar(&options.section, "section", "", "section setting name")
+	flags.StringVar(&options.merge, "merge", "", "signal whether service specific settings should be merged with shared settings. Compatible with scope settings only")
+
+	return cmd
+}
+
+func settingShow(options settingsOptions) error {
+	api := settings.New(curl())
+
+	if options.section != "" {
+		if options.merge != "" {
+			fmt.Fprintln(os.Stderr, "Error: --merge flag is compatible with scope settings only")
+			os.Exit(1)
+		}
+
+		res, err := api.ScopeSectionSettings(strings.ToUpper(options.scope),
+			strings.ToLower(options.section))
+		if err != nil {
+			return err
+		}
+
+		return stdout(res)
+	} else {
+		res, err := api.ScopeSettings(strings.ToUpper(options.scope), options.merge)
+		if err != nil {
+			return err
+		}
+
+		return stdout(res)
+	}
 }
 
 //
 //
-func scopeSettingUpdateCmd() *cobra.Command {
+func settingUpdateCmd() *cobra.Command {
 	options := settingsOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "Update scope settings",
-		Long:  `Update settings for a scope`,
+		Short: "Update scope/section settings",
+		Long:  `Update scope/section settings. Scope is by default GLOBAL.`,
 		Example: `
-	privx-cli settings update-scope [access flags] --scope <SCOPE> JSON-FILE
+	privx-cli settings update [access flags] --scope <SCOPE> JSON-FILE
+	privx-cli settings update [access flags] --scope <SCOPE> --section <SECTION> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return scopeSettingUpdate(options, args)
+			return settingUpdate(options, args)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.scope, "scope", "", "scope setting name")
-	cmd.MarkFlagRequired("scope")
+	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
+	flags.StringVar(&options.section, "section", "", "section setting name")
 
 	return cmd
 }
 
-func scopeSettingUpdate(options settingsOptions, args []string) error {
-	var scopeSettings json.RawMessage
+func settingUpdate(options settingsOptions, args []string) error {
+	var updateSettings json.RawMessage
 	api := settings.New(curl())
 
-	err := decodeJSON(args[0], &scopeSettings)
+	err := decodeJSON(args[0], &updateSettings)
 	if err != nil {
 		return err
 	}
 
-	err = api.UpdateScopeSettings(&scopeSettings, strings.ToUpper(options.scope))
-	if err != nil {
-		return err
+	if options.section != "" {
+		err = api.UpdateScopeSectionSettings(&updateSettings, strings.ToUpper(options.scope),
+			strings.ToLower(options.section))
+		if err != nil {
+			return err
+		}
+	} else {
+		err = api.UpdateScopeSettings(&updateSettings, strings.ToUpper(options.scope))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -110,36 +151,32 @@ func scopeSettingUpdate(options settingsOptions, args []string) error {
 
 //
 //
-func scopeSectionSettingShowCmd() *cobra.Command {
+func schemaListCmd() *cobra.Command {
 	options := settingsOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "scope-section",
-		Short: "Get scope section settings",
-		Long:  `Get scope section settings`,
+		Use:   "list-schema",
+		Short: "Get schema for the scope",
+		Long:  `Get schema for the scope. Scope is by default GLOBAL.`,
 		Example: `
-	privx-cli settings scope-section [access flags] --scope <SCOPE> --section <SECTION>
+	privx-cli settings list-schema [access flags] --scope <SCOPE>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return scopeSectionSettingShow(options)
+			return schemaList(options)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.scope, "scope", "", "scope setting name")
-	flags.StringVar(&options.section, "section", "", "section setting name")
-	cmd.MarkFlagRequired("scope")
-	cmd.MarkFlagRequired("section")
+	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
 
 	return cmd
 }
 
-func scopeSectionSettingShow(options settingsOptions) error {
+func schemaList(options settingsOptions) error {
 	api := settings.New(curl())
 
-	res, err := api.ScopeSectionSettings(strings.ToUpper(options.scope),
-		strings.ToLower(options.section))
+	res, err := api.ScopeSchema(strings.ToUpper(options.scope))
 	if err != nil {
 		return err
 	}
@@ -149,46 +186,38 @@ func scopeSectionSettingShow(options settingsOptions) error {
 
 //
 //
-func scopeSectionSettingUpdateCmd() *cobra.Command {
+func schemaShowCmd() *cobra.Command {
 	options := settingsOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "update-scope-section",
-		Short: "Update scope section settings",
-		Long:  `Update settings for a scope and section combination`,
+		Use:   "show-schema",
+		Short: "Get scope section schema",
+		Long:  `Get scope section schema. Scope is by default GLOBAL.`,
 		Example: `
-	privx-cli settings update-scope-section [access flags] --scope <SCOPE> --section <SECTION> JSON-FILE
+	privx-cli settings show-schema [access flags] --scope <SCOPE> --section <SECTION>
 		`,
-		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return scopeSectionSettingUpdate(options, args)
+			return schemaShow(options)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.scope, "scope", "", "scope setting name")
+	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
 	flags.StringVar(&options.section, "section", "", "section setting name")
-	cmd.MarkFlagRequired("scope")
 	cmd.MarkFlagRequired("section")
 
 	return cmd
 }
 
-func scopeSectionSettingUpdate(options settingsOptions, args []string) error {
-	var scopeSectionSettings json.RawMessage
+func schemaShow(options settingsOptions) error {
 	api := settings.New(curl())
 
-	err := decodeJSON(args[0], &scopeSectionSettings)
-	if err != nil {
-		return err
-	}
-
-	err = api.UpdateScopeSectionSettings(&scopeSectionSettings, strings.ToUpper(options.scope),
+	res, err := api.SectionSchema(strings.ToUpper(options.scope),
 		strings.ToLower(options.section))
 	if err != nil {
 		return err
 	}
 
-	return nil
+	return stdout(res)
 }
