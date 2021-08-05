@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/rolestore"
-	"github.com/SSHcom/privx-sdk-go/api/userstore"
 	"github.com/spf13/cobra"
 )
 
@@ -32,22 +31,6 @@ func init() {
 	rootCmd.AddCommand(userListCmd)
 	userListCmd.Flags().StringArrayVarP(&userQuery, "query", "q", []string{}, "query PrivX users with keyword")
 
-	userListCmd.AddCommand(userCreateCmd)
-
-	userListCmd.AddCommand(userUpdateCmd)
-	userUpdateCmd.Flags().StringVar(&userID, "uid", "", "unique user id")
-	userUpdateCmd.MarkFlagRequired("uid")
-
-	userListCmd.AddCommand(userDeleteCmd)
-	userDeleteCmd.Flags().StringVar(&userID, "uid", "", "unique user id")
-	userDeleteCmd.MarkFlagRequired("uid")
-
-	userListCmd.AddCommand(userUpdatePasswordCmd)
-	userUpdatePasswordCmd.Flags().StringVar(&userID, "uid", "", "unique user id")
-	userUpdatePasswordCmd.Flags().StringVar(&password, "password", "", "new password for local user")
-	userUpdatePasswordCmd.MarkFlagRequired("uid")
-	userUpdatePasswordCmd.MarkFlagRequired("password")
-
 	userListCmd.AddCommand(userShowCmd)
 
 	userListCmd.AddCommand(usersRolesCmd)
@@ -55,113 +38,6 @@ func init() {
 	usersRolesCmd.Flags().StringArrayVar(&userRoleGrant, "grant", []string{}, "grant role to user, requires role unique id.")
 	usersRolesCmd.Flags().StringArrayVar(&userRoleRevoke, "revoke", []string{}, "revoke role from user, requires role unique id.")
 	usersRolesCmd.MarkFlagRequired("uid")
-}
-
-//
-//
-var userCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create new local user",
-	Long:  `Create new local user`,
-	Example: `
-privx-cli users create [access flags] JSON-FILE
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         userCreate,
-}
-
-func userCreate(cmd *cobra.Command, args []string) error {
-	var newUser userstore.LocalUser
-	api := userstore.New(curl())
-
-	err := decodeJSON(args[0], &newUser)
-	if err != nil {
-		return err
-	}
-
-	uid, err := api.CreateLocalUser(newUser)
-	if err != nil {
-		return err
-	}
-
-	return stdout(uid)
-}
-
-//
-//
-var userUpdateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update local user",
-	Long:  `Update a local user`,
-	Example: `
-privx-cli users update [access flags] JSON-FILE --uid UID
-	`,
-	Args:         cobra.ExactArgs(1),
-	SilenceUsage: true,
-	RunE:         userUpdate,
-}
-
-func userUpdate(cmd *cobra.Command, args []string) error {
-	var updateUser userstore.LocalUser
-	api := userstore.New(curl())
-
-	err := decodeJSON(args[0], &updateUser)
-	if err != nil {
-		return err
-	}
-
-	err = api.UpdateLocalUser(userID, &updateUser)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-//
-//
-var userDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete local user",
-	Long:  `Delete a local user`,
-	Example: `
-privx-cli users delete [access flags] --uid UID
-	`,
-	SilenceUsage: true,
-	RunE:         userDelete,
-}
-
-func userDelete(cmd *cobra.Command, args []string) error {
-	api := userstore.New(curl())
-
-	err := api.DeleteLocalUser(userID)
-
-	return err
-}
-
-//
-//
-var userUpdatePasswordCmd = &cobra.Command{
-	Use:   "update-password",
-	Short: "Update local user password",
-	Long:  `Update a local users password`,
-	Example: `
-privx-cli users update-password [access flags] --uid UID --password NEW-PASSWORD
-	`,
-	SilenceUsage: true,
-	RunE:         userUpdatePassword,
-}
-
-func userUpdatePassword(cmd *cobra.Command, args []string) error {
-	newPassword := userstore.Password{
-		Password: password,
-	}
-	api := userstore.New(curl())
-
-	err := api.UpdateLocalUserPassword(userID, &newPassword)
-
-	return err
 }
 
 //
