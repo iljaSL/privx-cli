@@ -22,6 +22,14 @@ type settingsOptions struct {
 	merge   string
 }
 
+func (m settingsOptions) normalize_scope() string {
+	return strings.ToUpper(m.scope)
+}
+
+func (m settingsOptions) normalize_section() string {
+	return strings.ToLower(m.section)
+}
+
 func init() {
 	rootCmd.AddCommand(settingsCmd())
 }
@@ -80,15 +88,15 @@ func settingShow(options settingsOptions) error {
 			os.Exit(1)
 		}
 
-		res, err := api.ScopeSectionSettings(strings.ToUpper(options.scope),
-			strings.ToLower(options.section))
+		res, err := api.ScopeSectionSettings(options.normalize_scope(),
+			options.normalize_section())
 		if err != nil {
 			return err
 		}
 
 		return stdout(res)
 	} else {
-		res, err := api.ScopeSettings(strings.ToUpper(options.scope), options.merge)
+		res, err := api.ScopeSettings(options.normalize_scope(), "")
 		if err != nil {
 			return err
 		}
@@ -105,7 +113,7 @@ func settingUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update scope/section settings",
-		Long:  `Update scope/section settings. Scope is by default GLOBAL.`,
+		Long:  `Update scope/section settings.`,
 		Example: `
 	privx-cli settings update [access flags] --scope <SCOPE> JSON-FILE
 	privx-cli settings update [access flags] --scope <SCOPE> --section <SECTION> JSON-FILE
@@ -118,8 +126,9 @@ func settingUpdateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
+	flags.StringVar(&options.scope, "scope", "", "scope setting name")
 	flags.StringVar(&options.section, "section", "", "section setting name")
+	cmd.MarkFlagRequired("scope")
 
 	return cmd
 }
@@ -133,20 +142,15 @@ func settingUpdate(options settingsOptions, args []string) error {
 		return err
 	}
 
-	if options.section != "" {
-		err = api.UpdateScopeSectionSettings(&updateSettings, strings.ToUpper(options.scope),
-			strings.ToLower(options.section))
-		if err != nil {
-			return err
-		}
-	} else {
-		err = api.UpdateScopeSettings(&updateSettings, strings.ToUpper(options.scope))
-		if err != nil {
-			return err
-		}
+	switch options.section {
+	case "":
+		err = api.UpdateScopeSettings(&updateSettings, options.normalize_scope())
+	default:
+		err = api.UpdateScopeSectionSettings(&updateSettings, options.normalize_scope(),
+			options.normalize_section())
 	}
 
-	return nil
+	return err
 }
 
 //
@@ -176,7 +180,7 @@ func schemaListCmd() *cobra.Command {
 func schemaList(options settingsOptions) error {
 	api := settings.New(curl())
 
-	res, err := api.ScopeSchema(strings.ToUpper(options.scope))
+	res, err := api.ScopeSchema(options.normalize_scope())
 	if err != nil {
 		return err
 	}
@@ -213,8 +217,8 @@ func schemaShowCmd() *cobra.Command {
 func schemaShow(options settingsOptions) error {
 	api := settings.New(curl())
 
-	res, err := api.SectionSchema(strings.ToUpper(options.scope),
-		strings.ToLower(options.section))
+	res, err := api.SectionSchema(options.normalize_scope(),
+		options.normalize_section())
 	if err != nil {
 		return err
 	}
