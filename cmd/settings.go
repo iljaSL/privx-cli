@@ -8,8 +8,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/settings"
@@ -19,7 +17,6 @@ import (
 type settingsOptions struct {
 	scope   string
 	section string
-	merge   string
 }
 
 func (m settingsOptions) normalize_scope() string {
@@ -74,7 +71,6 @@ func settingShowCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVarP(&options.scope, "scope", "", "GLOBAL", "scope setting name")
 	flags.StringVar(&options.section, "section", "", "section setting name")
-	flags.StringVar(&options.merge, "merge", "", "signal whether service specific settings should be merged with shared settings. Compatible with scope settings only")
 
 	return cmd
 }
@@ -83,11 +79,6 @@ func settingShow(options settingsOptions) error {
 	api := settings.New(curl())
 
 	if options.section != "" {
-		if options.merge != "" {
-			fmt.Fprintln(os.Stderr, "Error: --merge flag is compatible with scope settings only")
-			os.Exit(1)
-		}
-
 		res, err := api.ScopeSectionSettings(options.normalize_scope(),
 			options.normalize_section())
 		if err != nil {
