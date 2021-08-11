@@ -15,53 +15,68 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+type tagOptions struct {
 	tagType string
 	sortdir string
-)
+	query   string
+	limit   int
+	offset  int
+}
 
 func init() {
-	rootCmd.AddCommand(tagListCmd)
-	tagListCmd.Flags().IntVar(&offset, "offset", 0, "where to start fetching the items")
-	tagListCmd.Flags().IntVar(&limit, "limit", 50, "number of items to return")
-	tagListCmd.Flags().StringVar(&query, "query", "", "query string matches the tags")
-	tagListCmd.Flags().StringVar(&sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	tagListCmd.Flags().StringVar(&tagType, "type", "", "choose the tag type, user or host")
-	tagListCmd.MarkFlagRequired("type")
+	rootCmd.AddCommand(tagListCmd())
 }
 
 //
 //
-var tagListCmd = &cobra.Command{
-	Use:   "tags",
-	Short: "User | Host tags",
-	Long:  `Get privx user or host tags`,
-	Example: `
-privx-cli tags [access flags] --type user
-privx-cli tags [access flags] --type host --sortdir DESC
-privx-cli tags [access flags] --type host --query TAG
-privx-cli tags [access flags] --type user --offset OFFSET --limit LIMIT
-	`,
-	SilenceUsage: true,
-	RunE:         tagList,
+func tagListCmd() *cobra.Command {
+	options := tagOptions{}
+
+	cmd := &cobra.Command{
+		Use:   "tags",
+		Short: "User | Host tags",
+		Long:  `Get privx user or host tags`,
+		Example: `
+	privx-cli tags [access flags] --type user
+	privx-cli tags [access flags] --type host --sortdir DESC
+	privx-cli tags [access flags] --type host --query TAG
+	privx-cli tags [access flags] --type user --offset OFFSET --limit LIMIT
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return tagList(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.query, "query", "", "query string matches the tags")
+	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.tagType, "type", "", "choose the tag type, user or host")
+	cmd.MarkFlagRequired("type")
+
+	return cmd
 }
 
-func tagList(cmd *cobra.Command, args []string) error {
-	if tagType == "user" {
-		userTags()
-	} else if tagType == "host" {
-		hostTags()
-	} else {
-		return fmt.Errorf("tag type does not exist: %s", tagType)
+func tagList(options tagOptions) error {
+	switch options.tagType {
+	case "user":
+		userTags(options)
+	case "host":
+		hostTags(options)
+	default:
+		return fmt.Errorf("tag type does not exist: %s", options.tagType)
 	}
 
 	return nil
 }
 
-func userTags() error {
+func userTags(options tagOptions) error {
 	api := userstore.New(curl())
 
-	tags, err := api.LocalUserTags(offset, limit, strings.ToUpper(sortdir), query)
+	tags, err := api.LocalUserTags(options.offset, options.limit,
+		strings.ToUpper(options.sortdir), options.query)
 	if err != nil {
 		return err
 	}
@@ -69,10 +84,11 @@ func userTags() error {
 	return stdout(tags)
 }
 
-func hostTags() error {
+func hostTags(options tagOptions) error {
 	api := hoststore.New(curl())
 
-	tags, err := api.HostTags(offset, limit, strings.ToUpper(sortdir), query)
+	tags, err := api.HostTags(options.offset, options.limit,
+		strings.ToUpper(options.sortdir), options.query)
 	if err != nil {
 		return err
 	}
