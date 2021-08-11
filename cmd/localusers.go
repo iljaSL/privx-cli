@@ -251,8 +251,8 @@ func localUserUpdatePasswordCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&userID, "id", "", "unique user id")
-	flags.StringVar(&password, "password", "", "new password for local user")
+	flags.StringVar(&options.userID, "id", "", "unique user id")
+	flags.StringVar(&options.password, "password", "", "new password for local user")
 	cmd.MarkFlagRequired("id")
 	cmd.MarkFlagRequired("password")
 

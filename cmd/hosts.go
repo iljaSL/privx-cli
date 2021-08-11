@@ -1,3 +1,9 @@
+//
+// Copyright (c) 2021 SSH Communications Security Inc.
+//
+// All rights reserved.
+//
+
 package cmd
 
 import (
