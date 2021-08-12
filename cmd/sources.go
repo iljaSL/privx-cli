@@ -103,9 +103,9 @@ func sourceShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show",
 		Short: "Get source by ID",
-		Long:  `Get source by ID. Source ID's are separated by commas when using multiple values, see example`,
+		Long:  `Get source by ID`,
 		Example: `
-	privx-cli sources show [access flags] --id <SOURCE-ID>,<SOURCE-ID>
+	privx-cli sources show [access flags] --id <SOURCE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -122,17 +122,13 @@ func sourceShowCmd() *cobra.Command {
 
 func sourceShow(options sourceOptions) error {
 	api := rolestore.New(curl())
-	sources := []rolestore.Source{}
 
-	for _, id := range strings.Split(options.sourceID, ",") {
-		source, err := api.Source(id)
-		if err != nil {
-			return err
-		}
-		sources = append(sources, *source)
+	source, err := api.Source(options.sourceID)
+	if err != nil {
+		return err
 	}
 
-	return stdout(sources)
+	return stdout(source)
 }
 
 //

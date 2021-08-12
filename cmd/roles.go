@@ -108,9 +108,9 @@ func roleShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show",
 		Short: "Get role by ID",
-		Long:  `Get role by ID. Role ID's are separated by commas when using multiple values, see example`,
+		Long:  `Get role by ID`,
 		Example: `
-	privx-cli roles show [access flags] --id <ROLE-ID>,<ROLE-ID>
+	privx-cli roles show [access flags] --id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -127,17 +127,13 @@ func roleShowCmd() *cobra.Command {
 
 func roleShow(options roleOptions) error {
 	api := rolestore.New(curl())
-	roles := []rolestore.Role{}
 
-	for _, id := range strings.Split(options.roleID, ",") {
-		role, err := api.Role(id)
-		if err != nil {
-			return err
-		}
-		roles = append(roles, *role)
+	role, err := api.Role(options.roleID)
+	if err != nil {
+		return err
 	}
 
-	return stdout(roles)
+	return stdout(role)
 }
 
 //

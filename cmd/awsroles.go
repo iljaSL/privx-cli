@@ -71,9 +71,9 @@ func awsRoleShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show",
 		Short: "Get AWS role by ID",
-		Long:  `Get AWS role by ID. AWS role ID's are separated by commas when using multiple values, see example`,
+		Long:  `Get AWS role by ID`,
 		Example: `
-	privx-cli aws-roles show [access flags] --id <AWS-ROLE-ID>,<AWS-ROLE-ID>
+	privx-cli aws-roles show [access flags] --id <AWS-ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -90,17 +90,13 @@ func awsRoleShowCmd() *cobra.Command {
 
 func awsRoleShow(options awsRoleOptions) error {
 	api := rolestore.New(curl())
-	roles := []rolestore.AWSRoleLink{}
 
-	for _, id := range strings.Split(options.awsRoleID, ",") {
-		role, err := api.AWSRoleLink(id)
-		if err != nil {
-			return err
-		}
-		roles = append(roles, *role)
+	role, err := api.AWSRoleLink(options.awsRoleID)
+	if err != nil {
+		return err
 	}
 
-	return stdout(roles)
+	return stdout(role)
 }
 
 //
