@@ -34,7 +34,7 @@ func principalkeyListCmd() *cobra.Command {
 		Long: `List and manage role's principal key's.
 Role ID's are separated by commas when using multiple values, see example`,
 		Example: `
-	privx-cli principal-keys [access flags] --id <ROLE-ID>,<ROLE-ID>
+	privx-cli principal-keys [access flags] --role-id <ROLE-ID>,<ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -43,8 +43,8 @@ Role ID's are separated by commas when using multiple values, see example`,
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "id", "", "role ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	cmd.MarkFlagRequired("role-id")
 
 	cmd.AddCommand(principalkeyGenerateCmd())
 	cmd.AddCommand(principalkeyImportCmd())
@@ -79,7 +79,7 @@ func principalkeyGenerateCmd() *cobra.Command {
 		Short: "Generate new principal key for role",
 		Long:  `Generate new principal key for role`,
 		Example: `
-	privx-cli principal-keys generate [access flags] --id <ROLE-ID>
+	privx-cli principal-keys generate [access flags] --role-id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -88,8 +88,8 @@ func principalkeyGenerateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "id", "", "role ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	cmd.MarkFlagRequired("role-id")
 
 	return cmd
 }
@@ -116,7 +116,7 @@ func principalkeyImportCmd() *cobra.Command {
 		Long: `Import new principal key for role.
 PEM encoded private key, pkcs#8, RSA, ECDSA and Ed25519 private keys are supported`,
 		Example: `
-	privx-cli principal-keys import [access flags] --id <ROLE-ID> KEY-FILE
+	privx-cli principal-keys import [access flags] --role-id <ROLE-ID> KEY-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -126,8 +126,8 @@ PEM encoded private key, pkcs#8, RSA, ECDSA and Ed25519 private keys are support
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "id", "", "role ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	cmd.MarkFlagRequired("role-id")
 
 	return cmd
 }
@@ -161,7 +161,7 @@ func principalkeyShowCmd() *cobra.Command {
 		Short: "Get role's principal key",
 		Long:  `Get role's principal key`,
 		Example: `
-	privx-cli principal-keys show [access flags] --id <ROLE-ID> --key-id <KEY-ID>
+	privx-cli principal-keys show [access flags] --id <KEY-ID> --role-id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -170,10 +170,10 @@ func principalkeyShowCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "id", "", "role ID")
-	flags.StringVar(&options.keyID, "key-id", "", "key ID")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	flags.StringVar(&options.keyID, "id", "", "key ID")
+	cmd.MarkFlagRequired("role-id")
 	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("key-id")
 
 	return cmd
 }
@@ -199,7 +199,7 @@ func principalkeyDeleteCmd() *cobra.Command {
 		Short: "Delete a role's principal key",
 		Long:  `Delete a role's principal key.`,
 		Example: `
-	privx-cli principal-keys delete [access flags] --id <ROLE-ID> --key-id <KEY_ID>
+	privx-cli principal-keys delete [access flags] --id <KEY_ID> --role-id <ROLE-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -208,10 +208,10 @@ func principalkeyDeleteCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.roleID, "id", "", "role ID")
-	flags.StringVar(&options.keyID, "key-id", "", "key ID")
+	flags.StringVar(&options.roleID, "role-id", "", "role ID")
+	flags.StringVar(&options.keyID, "id", "", "key ID")
+	cmd.MarkFlagRequired("role-id")
 	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("key-id")
 
 	return cmd
 }

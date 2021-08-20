@@ -81,7 +81,7 @@ func authorizedkeyShowCmd() *cobra.Command {
 		Short: "Get user's authorized keys",
 		Long:  `Get user's authorized keys`,
 		Example: `
-	privx-cli authorized-keys show [access flags] --id <USER-ID>
+	privx-cli authorized-keys show [access flags] --user-id <USER-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -90,8 +90,8 @@ func authorizedkeyShowCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "id", "", "user ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.userID, "user-id", "", "user ID")
+	cmd.MarkFlagRequired("user-id")
 
 	return cmd
 }
@@ -117,7 +117,7 @@ func authorizedkeyCreateCmd() *cobra.Command {
 		Short: "Create new authorized key for user",
 		Long:  `Create new authorized key for user`,
 		Example: `
-	privx-cli authorized-keys create [access flags] JSON-FILE --id <USER-ID>
+	privx-cli authorized-keys create [access flags] JSON-FILE --user-id <USER-ID>
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -127,8 +127,8 @@ func authorizedkeyCreateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "id", "", "user ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.userID, "user-id", "", "user ID")
+	cmd.MarkFlagRequired("user-id")
 
 	return cmd
 }
@@ -160,7 +160,7 @@ func authorizedkeyUpdateCmd() *cobra.Command {
 		Short: "Update authorized key for user",
 		Long:  `Update authorized key for user`,
 		Example: `
-	privx-cli authorized-keys update [access flags] JSON-FILE --id <USER-ID> --key-id <KEY-ID>
+	privx-cli authorized-keys update [access flags] JSON-FILE --id <KEY-ID> --user-id <USER-ID>
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -170,10 +170,10 @@ func authorizedkeyUpdateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "id", "", "user ID")
-	flags.StringVar(&options.keyID, "key-id", "", "key ID")
+	flags.StringVar(&options.userID, "user-id", "", "user ID")
+	flags.StringVar(&options.keyID, "id", "", "key ID")
+	cmd.MarkFlagRequired("user-id")
 	cmd.MarkFlagRequired("id")
-	cmd.MarkFlagRequired("key-id")
 
 	return cmd
 }
@@ -205,7 +205,7 @@ func authorizedkeyDeleteCmd() *cobra.Command {
 		Short: "Delete user's authorized key",
 		Long:  `Delete user's authorized key`,
 		Example: `
-	privx-cli authorized-keys delete [access flags] --id <USER-ID> --key-id <KEY-ID>
+	privx-cli authorized-keys delete [access flags] --id <KEY-ID> --user-id <USER-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -214,10 +214,10 @@ func authorizedkeyDeleteCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "id", "", "user ID")
-	flags.StringVar(&options.keyID, "key-id", "", "key ID")
-	cmd.MarkFlagRequired("key-id")
+	flags.StringVar(&options.userID, "user-id", "", "user ID")
+	flags.StringVar(&options.keyID, "id", "", "key ID")
 	cmd.MarkFlagRequired("id")
+	cmd.MarkFlagRequired("user-id")
 
 	return cmd
 }

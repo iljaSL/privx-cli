@@ -104,7 +104,7 @@ func collectorShowCmd() *cobra.Command {
 		Short: "Get logconf collector",
 		Long:  `Get logconf collector`,
 		Example: `
-	privx-cli collectors show [access flags] --id <COLLECTOR-ID>
+	privx-cli collectors show [access flags] --collector-id <COLLECTOR-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -113,8 +113,8 @@ func collectorShowCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.collectorID, "id", "", "collector ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.collectorID, "collector-id", "", "collector ID")
+	cmd.MarkFlagRequired("collector-id")
 
 	return cmd
 }
@@ -140,7 +140,7 @@ func collectorUpdateCmd() *cobra.Command {
 		Short: "Update logconf collector",
 		Long:  `Update logconf collector`,
 		Example: `
-	privx-cli collectors update [access flags] JSON-FILE --id <COLLECTOR-ID>
+	privx-cli collectors update [access flags] JSON-FILE --collector-id <COLLECTOR-ID>
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -150,8 +150,8 @@ func collectorUpdateCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.collectorID, "id", "", "collector ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.collectorID, "collector-id", "", "collector ID")
+	cmd.MarkFlagRequired("collector-id")
 
 	return cmd
 }
@@ -183,7 +183,7 @@ func collectorDeleteCmd() *cobra.Command {
 		Short: "Delete logconf collector",
 		Long:  `Delete logconf collector. Collector ID's are separated by commas when using multiple values, see example`,
 		Example: `
-	privx-cli collectors delete [access flags] --id <COLLECTOR-ID>,<COLLECTOR-ID>
+	privx-cli collectors delete [access flags] --collector-id <COLLECTOR-ID>,<COLLECTOR-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -192,8 +192,8 @@ func collectorDeleteCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.collectorID, "id", "", "collector ID")
-	cmd.MarkFlagRequired("id")
+	flags.StringVar(&options.collectorID, "collector-id", "", "collector ID")
+	cmd.MarkFlagRequired("collector-id")
 
 	return cmd
 }
