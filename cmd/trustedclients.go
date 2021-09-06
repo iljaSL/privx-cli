@@ -35,7 +35,7 @@ func init() {
 //
 func extenderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "extender",
+		Use:          "trusted-clients",
 		Short:        "List trusted clients and donwload pre configs",
 		Long:         `List trusted clients and donwload pre configs`,
 		SilenceUsage: true,
