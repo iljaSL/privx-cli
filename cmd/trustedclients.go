@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type extenderOptions struct {
+type trustedClientOptions struct {
 	accessGroupID   string
 	extenderID      string
 	fileName        string
@@ -23,17 +23,17 @@ type extenderOptions struct {
 	trustedClientID string
 }
 
-func (m extenderOptions) normalizeClientType() string {
+func (m trustedClientOptions) normalizeClientType() string {
 	return strings.ToUpper(m.clientType)
 }
 
 func init() {
-	rootCmd.AddCommand(extenderCmd())
+	rootCmd.AddCommand(trustedClientsCmd())
 }
 
 //
 //
-func extenderCmd() *cobra.Command {
+func trustedClientsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "trusted-clients",
 		Short:        "List trusted clients and donwload pre configs",
@@ -44,8 +44,8 @@ func extenderCmd() *cobra.Command {
 	cmd.AddCommand(caListCmd())
 	cmd.AddCommand(caShowCmd())
 	cmd.AddCommand(revocationListCmd())
-	cmd.AddCommand(extenderListCmd())
-	cmd.AddCommand(extenderShowCmd())
+	cmd.AddCommand(trustedClientListCmd())
+	cmd.AddCommand(trustedClientShowCmd())
 	cmd.AddCommand(preconfigurationDownloadCmd())
 
 	return cmd
@@ -53,20 +53,20 @@ func extenderCmd() *cobra.Command {
 
 //
 //
-func extenderListCmd() *cobra.Command {
-	options := extenderOptions{}
+func trustedClientListCmd() *cobra.Command {
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List trusted clients",
 		Long:  `List trusted clients (extender | web-proxy | carrier)`,
 		Example: `
-	privx-cli extender [access flags] --type extender | webproxy | carrier
-	privx-cli extender [access flags] --group-id <ACCESS-GROUP-ID> --type extender | webproxy | carrier
+	privx-cli trusted-clients [access flags] --type extender | webproxy | carrier
+	privx-cli trusted-clients [access flags] --group-id <ACCESS-GROUP-ID> --type extender | webproxy | carrier
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return extenderList(options)
+			return trustedClientList(options)
 		},
 	}
 
@@ -77,7 +77,7 @@ func extenderListCmd() *cobra.Command {
 	return cmd
 }
 
-func extenderList(options extenderOptions) error {
+func trustedClientList(options trustedClientOptions) error {
 	var clients []userstore.TrustedClient
 	api := userstore.New(curl())
 
@@ -88,11 +88,11 @@ func extenderList(options extenderOptions) error {
 
 	switch options.clientType {
 	case "extender":
-		clients = extenderListHelper(res, options.normalizeClientType())
+		clients = trustedClientListHelper(res, options.normalizeClientType())
 	case "webproxy":
-		clients = extenderListHelper(res, "ICAP")
+		clients = trustedClientListHelper(res, "ICAP")
 	case "carrier":
-		clients = extenderListHelper(res, options.normalizeClientType())
+		clients = trustedClientListHelper(res, options.normalizeClientType())
 	default:
 		return fmt.Errorf("client type does not exist: %s", options.clientType)
 	}
@@ -100,7 +100,7 @@ func extenderList(options extenderOptions) error {
 	return stdout(clients)
 }
 
-func extenderListHelper(trustedClients []userstore.TrustedClient, clientType string) []userstore.TrustedClient {
+func trustedClientListHelper(trustedClients []userstore.TrustedClient, clientType string) []userstore.TrustedClient {
 	clients := []userstore.TrustedClient{}
 
 	for _, client := range trustedClients {
@@ -114,19 +114,19 @@ func extenderListHelper(trustedClients []userstore.TrustedClient, clientType str
 
 //
 //
-func extenderShowCmd() *cobra.Command {
-	options := extenderOptions{}
+func trustedClientShowCmd() *cobra.Command {
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "show",
 		Short: "Get trusted client by ID",
 		Long:  `Get trusted client by ID`,
 		Example: `
-	privx-cli extender [access flags] --client-id <TRUSTED-CLIENT-ID>
+	privx-cli trusted-clients [access flags] --client-id <TRUSTED-CLIENT-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return extenderShow(options)
+			return trustedClientShow(options)
 		},
 	}
 
@@ -137,7 +137,7 @@ func extenderShowCmd() *cobra.Command {
 	return cmd
 }
 
-func extenderShow(options extenderOptions) error {
+func trustedClientShow(options trustedClientOptions) error {
 	api := userstore.New(curl())
 
 	client, err := api.TrustedClient(options.trustedClientID)
@@ -151,15 +151,15 @@ func extenderShow(options extenderOptions) error {
 //
 //
 func caListCmd() *cobra.Command {
-	options := extenderOptions{}
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "list-ca",
 		Short: "List CA certificates",
 		Long:  `List CA certificates for extender or web-proxy`,
 		Example: `
-	privx-cli extender [access flags] --type extender | webproxy
-	privx-cli extender [access flags] --group-id <ACCESS-GROUP-ID> --type extender | webproxy
+	privx-cli trusted-clients [access flags] --type extender | webproxy
+	privx-cli trusted-clients [access flags] --group-id <ACCESS-GROUP-ID> --type extender | webproxy
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -184,7 +184,7 @@ func caListCmd() *cobra.Command {
 	return cmd
 }
 
-func extenderCAList(options extenderOptions) error {
+func extenderCAList(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	certificates, err := api.ExtenderCACertificates(options.accessGroupID)
@@ -195,7 +195,7 @@ func extenderCAList(options extenderOptions) error {
 	return stdout(certificates)
 }
 
-func webproxyCAList(options extenderOptions) error {
+func webproxyCAList(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	certificates, err := api.WebProxyCACertificates(options.accessGroupID)
@@ -209,14 +209,14 @@ func webproxyCAList(options extenderOptions) error {
 //
 //
 func caShowCmd() *cobra.Command {
-	options := extenderOptions{}
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "show-ca",
 		Short: "Get CA certificate",
 		Long:  `Get CA certificate for extender or web-proxy`,
 		Example: `
-	privx-cli extender show [access flags] --client-id <EXTENDER-ID> --type extender | webproxy
+	privx-cli trusted-clients show [access flags] --client-id <EXTENDER-ID> --type extender | webproxy
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -242,7 +242,7 @@ func caShowCmd() *cobra.Command {
 	return cmd
 }
 
-func extenderCAShow(options extenderOptions) error {
+func extenderCAShow(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	certificate, err := api.ExtenderCACertificate(options.trustedClientID)
@@ -253,7 +253,7 @@ func extenderCAShow(options extenderOptions) error {
 	return stdout(certificate)
 }
 
-func webproxyCAShow(options extenderOptions) error {
+func webproxyCAShow(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	certificate, err := api.WebProxyCACertificate(options.trustedClientID)
@@ -267,14 +267,14 @@ func webproxyCAShow(options extenderOptions) error {
 //
 //
 func revocationListCmd() *cobra.Command {
-	options := extenderOptions{}
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "show-crl",
 		Short: "Get revocation list",
 		Long:  `Get revocation list for extender or web-proxy`,
 		Example: `
-	privx-cli extender revocation-list [access flags] --client-id <TRUSTED-CLIENT-ID> --type extender | webproxy --name <FILE-NAME>
+	privx-cli trusted-clients revocation-list [access flags] --client-id <TRUSTED-CLIENT-ID> --type extender | webproxy --name <FILE-NAME>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -302,7 +302,7 @@ func revocationListCmd() *cobra.Command {
 	return cmd
 }
 
-func extenderRevocationList(options extenderOptions) error {
+func extenderRevocationList(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	err := api.DownloadExtenderCertificateCRL(options.fileName, options.trustedClientID)
@@ -313,7 +313,7 @@ func extenderRevocationList(options extenderOptions) error {
 	return nil
 }
 
-func webproxyRevocationList(options extenderOptions) error {
+func webproxyRevocationList(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	err := api.DownloadWebProxyCertificateCRL(options.fileName, options.trustedClientID)
@@ -327,14 +327,14 @@ func webproxyRevocationList(options extenderOptions) error {
 //
 //
 func preconfigurationDownloadCmd() *cobra.Command {
-	options := extenderOptions{}
+	options := trustedClientOptions{}
 
 	cmd := &cobra.Command{
 		Use:   "pre-config",
 		Short: "Download a pre-configured config file for extender, webproxy or carrier",
 		Long:  `Download a pre-configured config file for extender, webproxy or carrier`,
 		Example: `
-	privx-cli pre-config [access flags] --client-id <ACCESS-GROUP-ID> --type extender | webproxy | carrier --name <FILE-NAME>
+	privx-cli trusted-clients pre-config [access flags] --client-id <ACCESS-GROUP-ID> --type extender | webproxy | carrier --name <FILE-NAME>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -353,7 +353,7 @@ func preconfigurationDownloadCmd() *cobra.Command {
 	return cmd
 }
 
-func preconfigurationDownloadSwitch(options extenderOptions) error {
+func preconfigurationDownloadSwitch(options trustedClientOptions) error {
 	switch options.clientType {
 	case "extender":
 		downloadExtenderPreConf(options)
@@ -367,7 +367,7 @@ func preconfigurationDownloadSwitch(options extenderOptions) error {
 
 	return nil
 }
-func downloadExtenderPreConf(options extenderOptions) error {
+func downloadExtenderPreConf(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	handler, err := api.ExtenderConfigDownloadHandle(options.trustedClientID)
@@ -383,7 +383,7 @@ func downloadExtenderPreConf(options extenderOptions) error {
 	return nil
 }
 
-func downloadWebProxyPreConf(options extenderOptions) error {
+func downloadWebProxyPreConf(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	handler, err := api.WebProxySessionDownloadHandle(options.trustedClientID)
@@ -399,7 +399,7 @@ func downloadWebProxyPreConf(options extenderOptions) error {
 	return nil
 }
 
-func downloadCarrierPreConf(options extenderOptions) error {
+func downloadCarrierPreConf(options trustedClientOptions) error {
 	api := authorizer.New(curl())
 
 	handler, err := api.CarrierConfigDownloadHandle(options.trustedClientID)
