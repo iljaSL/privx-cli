@@ -334,7 +334,7 @@ func preconfigurationDownloadCmd() *cobra.Command {
 		Short: "Download a pre-configured config file for extender, webproxy or carrier",
 		Long:  `Download a pre-configured config file for extender, webproxy or carrier`,
 		Example: `
-	privx-cli trusted-clients pre-config [access flags] --client-id <ACCESS-GROUP-ID> --type extender | webproxy | carrier --name <FILE-NAME>
+	privx-cli trusted-clients pre-config [access flags] --client-id <TRUSTED-CLIENT-ID> --type extender | webproxy | carrier --name <FILE-NAME>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
