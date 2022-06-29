@@ -17,6 +17,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type UserSearchOptions struct {
+	limit   int
+	offset  int
+	sortkey string
+	sortdir string
+	keyword string
+	source  string
+}
 type userOptions struct {
 	userID         string
 	enable         bool
@@ -27,12 +35,7 @@ type userOptions struct {
 	userRoleGrant  []string
 	userRoleRevoke []string
 	UserIDs        []string
-	limit          int
-	offset         int
-	sortkey        string
-	sortdir        string
-	keyword        string
-	source         string
+	searchOptions  UserSearchOptions
 }
 
 func init() {
@@ -41,6 +44,7 @@ func init() {
 
 //
 //
+
 func userListCmd() *cobra.Command {
 	options := userOptions{}
 
@@ -58,11 +62,11 @@ func userListCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.keyword, "keywords", "", "comma or space-separated string to search in secret's names")
-	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
-	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
-	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	flags.StringVar(&options.sortkey, "sortkey", "", "sort object by property: source, email, principal, full_name.")
+	flags.StringVar(&options.searchOptions.keyword, "keywords", "", "comma or space-separated string to search in secret's names")
+	flags.IntVar(&options.searchOptions.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.searchOptions.limit, "limit", 50, "max number of items to return")
+	flags.StringVar(&options.searchOptions.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.searchOptions.sortkey, "sortkey", "", "sort object by property: source, email, principal, full_name.")
 	flags.StringArrayVar(&options.UserIDs, "userid", []string{}, "list of users IDs.")
 
 	cmd.AddCommand(userShowCmd())
@@ -76,11 +80,23 @@ func userListCmd() *cobra.Command {
 }
 
 func userList(options userOptions) error {
+	err := validateSortDir(options.searchOptions.sortdir)
+	if err != nil {
+		return err
+	}
+	err = validateSortKey(options.searchOptions.sortkey)
+	if err != nil {
+		return err
+	}
 	api := rolestore.New(curl())
 
-	searchBody := rolestore.UserSearchObject{Keywords: options.keyword, Source: options.source, UserIDs: options.UserIDs}
+	searchBody := rolestore.UserSearchObject{
+		Keywords: options.searchOptions.keyword,
+		Source:   options.searchOptions.source,
+		UserIDs:  options.UserIDs,
+	}
 
-	users, err := api.SearchUsers(options.offset, options.limit, options.sortkey, strings.ToUpper(options.sortdir), searchBody)
+	users, err := api.SearchUsers(options.searchOptions.offset, options.searchOptions.limit, strings.ToLower(options.searchOptions.sortkey), strings.ToUpper(options.searchOptions.sortdir), searchBody)
 	if err != nil {
 		return err
 	}
