@@ -30,7 +30,7 @@ type vaultOptions struct {
 	keywords     string
 	vaultReadTo  []string
 	vaultWriteTo []string
-	ownerids     []string
+	ownerIDs     []string
 	ignoreError  bool
 	search       vaultSearchOptions
 }
@@ -380,7 +380,7 @@ func secretSearchCmd() *cobra.Command {
 	flags.StringVar(&options.search.sortkey, "sortkey", "", "sort object by name, updated, or created.")
 	flags.StringVar(&options.keywords, "keywords", "", "comma or space-separated string to search in secret's names")
 	flags.StringVar(&options.search.filter, "filter", "", "Defines what type of secrets to search for. personal, shared, readable, writeable") //shared not working
-	flags.StringArrayVar(&options.ownerids, "ownerids", []string{}, "list of users IDs that owns secrets.")
+	flags.StringArrayVar(&options.ownerIDs, "owner-ids", []string{}, "list of users IDs that owns secrets.")
 
 	return cmd
 }
@@ -402,7 +402,7 @@ func secretSearch(options vaultOptions) error {
 	searchBody := vault.SecretSearchRequest{
 		Keywords: options.keywords,
 		Filter:   strings.ToLower(options.search.filter),
-		OwnerIDs: options.ownerids,
+		OwnerIDs: options.ownerIDs,
 	}
 	secrets, err := api.SearchSecrets(options.search.offset,
 		options.search.limit,
@@ -474,7 +474,7 @@ func userSecretListCmd() *cobra.Command {
 		Short: "PrivX user secrets",
 		Long:  `List and manage PrivX secrets owned by a specific user`,
 		Example: `
-	privx-cli user-secrets [access flags] --user-id <USER-ID> --offset <OFFSET> --limit <LIMIT>
+	privx-cli user-secrets [access flags] --owner-id <OWNER-ID> --offset <OFFSET> --limit <LIMIT>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -485,8 +485,8 @@ func userSecretListCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.IntVar(&options.search.offset, "offset", 0, "where to start fetching the items")
 	flags.IntVar(&options.search.limit, "limit", 50, "number of items to return")
-	flags.StringVar(&options.ownerID, "user-id", "", "User ID of the user who owns the secret")
-	cmd.MarkFlagRequired("user-id")
+	flags.StringVar(&options.ownerID, "owner-id", "", "User ID of the user who owns the secret")
+	cmd.MarkFlagRequired("owner-id")
 
 	cmd.AddCommand(userSecretShowCmd())
 	cmd.AddCommand(userSecretCreateCmd())

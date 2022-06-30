@@ -34,7 +34,7 @@ type userOptions struct {
 	keywords       []string
 	userRoleGrant  []string
 	userRoleRevoke []string
-	UserIDs        []string
+	userIDs        []string
 	search         UserSearchOptions
 }
 
@@ -67,7 +67,7 @@ func userListCmd() *cobra.Command {
 	flags.IntVar(&options.search.limit, "limit", 50, "max number of items to return")
 	flags.StringVar(&options.search.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
 	flags.StringVar(&options.search.sortkey, "sortkey", "", "sort object by property: source, email, principal, full_name.")
-	flags.StringArrayVar(&options.UserIDs, "userid", []string{}, "list of users IDs.")
+	flags.StringArrayVar(&options.userIDs, "userid", []string{}, "list of users IDs.")
 
 	cmd.AddCommand(userShowCmd())
 	cmd.AddCommand(userSettingShowCmd())
@@ -114,7 +114,7 @@ func userList(options userOptions) error {
 	searchBody := rolestore.UserSearchObject{
 		Keywords: options.search.keyword,
 		Source:   options.search.source,
-		UserIDs:  options.UserIDs,
+		UserIDs:  options.userIDs,
 	}
 
 	users, err := api.SearchUsers(options.search.offset, options.search.limit, strings.ToLower(options.search.sortkey), strings.ToUpper(options.search.sortdir), searchBody)
