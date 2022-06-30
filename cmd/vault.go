@@ -25,14 +25,14 @@ type vaultSearchOptions struct {
 	sortdir string
 }
 type vaultOptions struct {
-	secretName    string
-	ownerID       string
-	keywords      string
-	vaultReadTo   []string
-	vaultWriteTo  []string
-	ownerids      []string
-	ignoreError   bool
-	searchOptions vaultSearchOptions
+	secretName   string
+	ownerID      string
+	keywords     string
+	vaultReadTo  []string
+	vaultWriteTo []string
+	ownerids     []string
+	ignoreError  bool
+	search       vaultSearchOptions
 }
 
 func init() {
@@ -59,8 +59,8 @@ func secretListCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVar(&options.searchOptions.offset, "offset", 0, "where to start fetching the items")
-	flags.IntVar(&options.searchOptions.limit, "limit", 50, "number of items to return")
+	flags.IntVar(&options.search.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.search.limit, "limit", 50, "number of items to return")
 
 	cmd.AddCommand(secretShowCmd())
 	cmd.AddCommand(secretCreateCmd())
@@ -76,7 +76,7 @@ func secretListCmd() *cobra.Command {
 func secretList(options vaultOptions) error {
 	api := vault.New(curl())
 
-	secrets, err := api.Secrets(options.searchOptions.offset, options.searchOptions.limit)
+	secrets, err := api.Secrets(options.search.offset, options.search.limit)
 	if err != nil {
 		return err
 	}
@@ -323,7 +323,7 @@ func secretMetadataShow(options vaultOptions) error {
 
 //
 //
-func validateFilter(filter string) error {
+func vaultValidateFilter(filter string) error {
 	filterAllowedValues := []string{"personal", "shared", "readable", "writable", ""}
 
 	for _, a := range filterAllowedValues {
@@ -334,7 +334,7 @@ func validateFilter(filter string) error {
 
 	return fmt.Errorf("filter field must be one of these values %q", filterAllowedValues)
 }
-func validateSortDir(sortdir string) error {
+func vaultValidateSortDir(sortdir string) error {
 	sortdirAllowedValues := []string{"ASC", "DESC"}
 
 	for _, a := range sortdirAllowedValues {
@@ -345,7 +345,7 @@ func validateSortDir(sortdir string) error {
 
 	return fmt.Errorf("sortdir field must be one of these values %q", sortdirAllowedValues)
 }
-func validateSortKey(sortkey string) error {
+func vaultValidateSortKey(sortkey string) error {
 	sortkeyAllowedValues := []string{"name", "updated", "created"}
 
 	for _, a := range sortkeyAllowedValues {
@@ -374,40 +374,40 @@ func secretSearchCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVar(&options.searchOptions.offset, "offset", 0, "where to start fetching the items")
-	flags.IntVar(&options.searchOptions.limit, "limit", 100, "number of items to return")
-	flags.StringVar(&options.searchOptions.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
-	flags.StringVar(&options.searchOptions.sortkey, "sortkey", "", "sort object by name, updated, or created.")
+	flags.IntVar(&options.search.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.search.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.search.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.search.sortkey, "sortkey", "", "sort object by name, updated, or created.")
 	flags.StringVar(&options.keywords, "keywords", "", "comma or space-separated string to search in secret's names")
-	flags.StringVar(&options.searchOptions.filter, "filter", "", "Defines what type of secrets to search for. personal, shared, readable, writeable") //shared not working
+	flags.StringVar(&options.search.filter, "filter", "", "Defines what type of secrets to search for. personal, shared, readable, writeable") //shared not working
 	flags.StringArrayVar(&options.ownerids, "ownerids", []string{}, "list of users IDs that owns secrets.")
 
 	return cmd
 }
 
 func secretSearch(options vaultOptions) error {
-	err := validateFilter(options.searchOptions.filter)
+	err := vaultValidateFilter(options.search.filter)
 	if err != nil {
 		return err
 	}
-	err = validateSortDir(options.searchOptions.sortdir)
+	err = vaultValidateSortDir(options.search.sortdir)
 	if err != nil {
 		return err
 	}
-	err = validateSortKey(options.searchOptions.sortkey)
+	err = vaultValidateSortKey(options.search.sortkey)
 	if err != nil {
 		return err
 	}
 	api := vault.New(curl())
 	searchBody := vault.SecretSearchRequest{
 		Keywords: options.keywords,
-		Filter:   strings.ToLower(options.searchOptions.filter),
+		Filter:   strings.ToLower(options.search.filter),
 		OwnerIDs: options.ownerids,
 	}
-	secrets, err := api.SearchSecrets(options.searchOptions.offset,
-		options.searchOptions.limit,
-		strings.ToLower(options.searchOptions.sortkey),
-		strings.ToUpper(options.searchOptions.sortdir),
+	secrets, err := api.SearchSecrets(options.search.offset,
+		options.search.limit,
+		strings.ToLower(options.search.sortkey),
+		strings.ToUpper(options.search.sortdir),
 		searchBody)
 
 	if err != nil {
@@ -483,8 +483,8 @@ func userSecretListCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVar(&options.searchOptions.offset, "offset", 0, "where to start fetching the items")
-	flags.IntVar(&options.searchOptions.limit, "limit", 100, "number of items to return")
+	flags.IntVar(&options.search.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.search.limit, "limit", 50, "number of items to return")
 	flags.StringVar(&options.ownerID, "user-id", "", "User ID of the user who owns the secret")
 	cmd.MarkFlagRequired("user-id")
 
@@ -499,7 +499,7 @@ func userSecretListCmd() *cobra.Command {
 func userSecretList(options vaultOptions) error {
 	api := vault.New(curl())
 	secretID := vault.SecretID{OwnerID: options.ownerID}
-	secrets, err := api.UserSecrets(secretID, options.searchOptions.offset, options.searchOptions.limit)
+	secrets, err := api.UserSecrets(secretID, options.search.offset, options.search.limit)
 	if err != nil {
 		return err
 	}
@@ -538,12 +538,12 @@ func userSecretShowCmd() *cobra.Command {
 func userSecretShow(options vaultOptions) error {
 	api := vault.New(curl())
 	secrets := []vault.Secret{}
-	secretID := &vault.SecretID{OwnerID: options.ownerID}
+	secretID := vault.SecretID{OwnerID: options.ownerID}
 	valueFound := false
 	var erro error
 	for i, name := range strings.Split(options.secretName, ",") {
 		secretID.Name = name
-		secret, err := api.UserSecret(*secretID)
+		secret, err := api.UserSecret(secretID)
 		if err != nil {
 			if !options.ignoreError {
 				return err
@@ -604,12 +604,12 @@ func userSecretCreate(args []string, options vaultOptions) error {
 		return err
 	}
 
-	secretID := &vault.SecretID{
+	secretID := vault.SecretID{
 		OwnerID: options.ownerID,
 		Name:    options.secretName,
 	}
 	api := vault.New(curl())
-	if err := api.CreateUserSecret(*secretID, options.vaultReadTo,
+	if err := api.CreateUserSecret(secretID, options.vaultReadTo,
 		options.vaultWriteTo, secret); err != nil {
 		return err
 	}
@@ -659,12 +659,12 @@ func userSecretUpdate(options vaultOptions, args []string) error {
 		return err
 	}
 
-	secretID := &vault.SecretID{
+	secretID := vault.SecretID{
 		OwnerID: options.ownerID,
 		Name:    options.secretName,
 	}
 	api := vault.New(curl())
-	bag, err := api.UserSecret(*secretID)
+	bag, err := api.UserSecret(secretID)
 	if err != nil {
 		return err
 	}
@@ -683,7 +683,7 @@ func userSecretUpdate(options vaultOptions, args []string) error {
 		}
 	}
 
-	if err := api.UpdateUserSecret(*secretID, tmpVaultReadTo,
+	if err := api.UpdateUserSecret(secretID, tmpVaultReadTo,
 		tmpVaultWriteTo, secret); err != nil {
 		return err
 	}
@@ -771,12 +771,12 @@ func userSecretDeleteCmd() *cobra.Command {
 func userSecretDelete(options vaultOptions) error {
 	api := vault.New(curl())
 
-	secretID := &vault.SecretID{OwnerID: options.ownerID}
+	secretID := vault.SecretID{OwnerID: options.ownerID}
 
 	for _, name := range strings.Split(options.secretName, ",") {
 		if name != "" {
 			secretID.Name = name
-			err := api.DeleteUserSecret(*secretID)
+			err := api.DeleteUserSecret(secretID)
 			if err != nil {
 				return err
 			} else {

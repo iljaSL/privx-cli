@@ -35,7 +35,7 @@ type userOptions struct {
 	userRoleGrant  []string
 	userRoleRevoke []string
 	UserIDs        []string
-	searchOptions  UserSearchOptions
+	search         UserSearchOptions
 }
 
 func init() {
@@ -62,11 +62,11 @@ func userListCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.searchOptions.keyword, "keywords", "", "comma or space-separated string to search in secret's names")
-	flags.IntVar(&options.searchOptions.offset, "offset", 0, "where to start fetching the items")
-	flags.IntVar(&options.searchOptions.limit, "limit", 50, "max number of items to return")
-	flags.StringVar(&options.searchOptions.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
-	flags.StringVar(&options.searchOptions.sortkey, "sortkey", "", "sort object by property: source, email, principal, full_name.")
+	flags.StringVar(&options.search.keyword, "keywords", "", "comma or space-separated string to search in secret's names")
+	flags.IntVar(&options.search.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.search.limit, "limit", 50, "max number of items to return")
+	flags.StringVar(&options.search.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.search.sortkey, "sortkey", "", "sort object by property: source, email, principal, full_name.")
 	flags.StringArrayVar(&options.UserIDs, "userid", []string{}, "list of users IDs.")
 
 	cmd.AddCommand(userShowCmd())
@@ -78,25 +78,46 @@ func userListCmd() *cobra.Command {
 
 	return cmd
 }
+func usersValidateSortDir(sortdir string) error {
+	sortdirAllowedValues := []string{"ASC", "DESC"}
 
+	for _, a := range sortdirAllowedValues {
+		if strings.ToUpper(a) == sortdir {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("sortdir field must be one of these values %q", sortdirAllowedValues)
+}
+func usersValidateSortKey(sortkey string) error {
+	sortkeyAllowedValues := []string{"name", "updated", "created"}
+
+	for _, a := range sortkeyAllowedValues {
+		if strings.ToLower(a) == sortkey {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("filter field must be one of these values %q", sortkeyAllowedValues)
+}
 func userList(options userOptions) error {
-	err := validateSortDir(options.searchOptions.sortdir)
+	err := usersValidateSortDir(options.search.sortdir)
 	if err != nil {
 		return err
 	}
-	err = validateSortKey(options.searchOptions.sortkey)
+	err = usersValidateSortKey(options.search.sortkey)
 	if err != nil {
 		return err
 	}
 	api := rolestore.New(curl())
 
 	searchBody := rolestore.UserSearchObject{
-		Keywords: options.searchOptions.keyword,
-		Source:   options.searchOptions.source,
+		Keywords: options.search.keyword,
+		Source:   options.search.source,
 		UserIDs:  options.UserIDs,
 	}
 
-	users, err := api.SearchUsers(options.searchOptions.offset, options.searchOptions.limit, strings.ToLower(options.searchOptions.sortkey), strings.ToUpper(options.searchOptions.sortdir), searchBody)
+	users, err := api.SearchUsers(options.search.offset, options.search.limit, strings.ToLower(options.search.sortkey), strings.ToUpper(options.search.sortdir), searchBody)
 	if err != nil {
 		return err
 	}
