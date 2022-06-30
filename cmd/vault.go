@@ -327,7 +327,7 @@ func vaultValidateFilter(filter string) error {
 	filterAllowedValues := []string{"personal", "shared", "readable", "writable", ""}
 
 	for _, a := range filterAllowedValues {
-		if strings.ToLower(a) == filter {
+		if a == strings.ToLower(filter) {
 			return nil
 		}
 	}
@@ -338,7 +338,7 @@ func vaultValidateSortDir(sortdir string) error {
 	sortdirAllowedValues := []string{"ASC", "DESC"}
 
 	for _, a := range sortdirAllowedValues {
-		if strings.ToUpper(a) == sortdir {
+		if a == strings.ToUpper(sortdir) {
 			return nil
 		}
 	}
@@ -349,7 +349,7 @@ func vaultValidateSortKey(sortkey string) error {
 	sortkeyAllowedValues := []string{"name", "updated", "created"}
 
 	for _, a := range sortkeyAllowedValues {
-		if strings.ToLower(a) == sortkey {
+		if a == strings.ToLower(sortkey) {
 			return nil
 		}
 	}

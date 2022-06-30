@@ -82,7 +82,7 @@ func usersValidateSortDir(sortdir string) error {
 	sortdirAllowedValues := []string{"ASC", "DESC"}
 
 	for _, a := range sortdirAllowedValues {
-		if strings.ToUpper(a) == sortdir {
+		if a == strings.ToUpper(sortdir) {
 			return nil
 		}
 	}
@@ -93,7 +93,7 @@ func usersValidateSortKey(sortkey string) error {
 	sortkeyAllowedValues := []string{"name", "updated", "created"}
 
 	for _, a := range sortkeyAllowedValues {
-		if strings.ToLower(a) == sortkey {
+		if a == strings.ToLower(sortkey) {
 			return nil
 		}
 	}
