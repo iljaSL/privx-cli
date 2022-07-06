@@ -59,6 +59,7 @@ func networkListCmd() *cobra.Command {
 
 	cmd.AddCommand(networkAccessManagerStatusCmd())
 	cmd.AddCommand(createNetworkCmd())
+	cmd.AddCommand(searchNetworkCmd())
 	cmd.AddCommand(getNetworkByIDCmd())
 	cmd.AddCommand(updateNetworkCmd())
 	cmd.AddCommand(deleteNetworkByIDCmd())
@@ -154,7 +155,48 @@ func createNetwork(args []string) error {
 //
 //
 //
+func searchNetworkCmd() *cobra.Command {
+	options := searchOptions{}
 
+	cmd := &cobra.Command{
+		Use:   "search",
+		Short: "Search network targets",
+		Long:  `Search Network targets`,
+		Example: `
+	privx-cli nam search[access flags] --offset 0 --limit 50 --sortkey <SORTKEY> --sortdir <SORTDIR> --keywords <KEYWORDS>,<KEYWORDS> --filter <FILTER> 
+		`,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return searchNetwork(options)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
+	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
+	flags.StringVar(&options.sortkey, "sortkey", "", "sort object by id, name, comment.., .")
+	flags.StringVar(&options.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC (default ASC)")
+	flags.StringVar(&options.filter, "filter", "", "comma or space-separated string to search in secret's names")
+	flags.StringVar(&options.keywords, "keywords", "", "search keywords")
+
+	return cmd
+}
+
+func searchNetwork(options searchOptions) error {
+
+	api := networkaccessmanager.New(curl())
+
+	result, err := api.SearchNetworkTargets(options.offset, options.limit, options.sortkey, strings.ToUpper(options.sortdir), options.filter, options.keywords)
+	if err != nil {
+		return err
+	}
+
+	return stdout(result)
+}
+
+//
+//
+//
 func getNetworkByIDCmd() *cobra.Command {
 	var networkID string
 	cmd := &cobra.Command{
