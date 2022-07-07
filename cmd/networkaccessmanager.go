@@ -7,9 +7,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
 	"strings"
 
 	"github.com/SSHcom/privx-sdk-go/api/networkaccessmanager"
@@ -71,7 +68,13 @@ func networkListCmd() *cobra.Command {
 func networkList(options searchOptions) error {
 	api := networkaccessmanager.New(curl())
 
-	networks, err := api.GetNetworkTargets(options.offset, options.limit, options.sortkey, strings.ToUpper(options.sortdir), options.name, options.ID)
+	networks, err := api.GetNetworkTargets(
+		options.offset,
+		options.limit,
+		options.sortkey,
+		strings.ToUpper(options.sortdir),
+		options.name,
+		options.ID)
 	if err != nil {
 		return err
 	}
@@ -126,23 +129,23 @@ func createNetworkCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return createNetwork(args)
+			return createNetwork(args[0])
 		},
 	}
 
 	return cmd
 }
 
-func createNetwork(args []string) error {
+func createNetwork(args string) error {
 	var network networkaccessmanager.Item
 
 	api := networkaccessmanager.New(curl())
 
-	err := decodeJSONnam(args[0], &network)
+	err := decodeJSON(args, &network)
 	if err != nil {
 		return err
 	}
-	//fmt.Println(network)
+
 	stdout(network)
 	id, err := api.CreateNetworkTargets(network)
 	if err != nil {
@@ -186,7 +189,13 @@ func searchNetwork(options searchOptions) error {
 
 	api := networkaccessmanager.New(curl())
 
-	result, err := api.SearchNetworkTargets(options.offset, options.limit, options.sortkey, strings.ToUpper(options.sortdir), options.filter, options.keywords)
+	result, err := api.SearchNetworkTargets(
+		options.offset,
+		options.limit,
+		options.sortkey,
+		strings.ToUpper(options.sortdir),
+		options.filter,
+		options.keywords)
 	if err != nil {
 		return err
 	}
@@ -200,11 +209,11 @@ func searchNetwork(options searchOptions) error {
 func getNetworkByIDCmd() *cobra.Command {
 	var networkID string
 	cmd := &cobra.Command{
-		Use:   "get-id",
+		Use:   "get",
 		Short: "Get a network by ID",
 		Long:  `Get a network by ID`,
 		Example: `
-	privx-cli nam get-id --id <NETWORK-ID>
+	privx-cli nam get --id <NETWORK-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -245,7 +254,7 @@ func updateNetworkCmd() *cobra.Command {
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return updateNetwork(args, networkID)
+			return updateNetwork(args[0], networkID)
 		},
 	}
 	flags := cmd.Flags()
@@ -255,17 +264,17 @@ func updateNetworkCmd() *cobra.Command {
 	return cmd
 }
 
-func updateNetwork(args []string, targetID string) error {
-	var network *networkaccessmanager.Item
+func updateNetwork(args string, targetID string) error {
+	var network networkaccessmanager.Item
 
 	api := networkaccessmanager.New(curl())
 
-	err := decodeJSONnam(args[0], &network)
+	err := decodeJSON(args, &network)
 	if err != nil {
 		return err
 	}
 
-	err = api.UpdateNetworkTarget(network, targetID)
+	err = api.UpdateNetworkTarget(&network, targetID)
 	if err != nil {
 		return err
 	}
@@ -285,6 +294,7 @@ func deleteNetworkByIDCmd() *cobra.Command {
 		Example: `
 	privx-cli nam delete --id <NETWORK-ID>
 		`,
+		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return deleteNetworkByID(networkID)
@@ -338,29 +348,6 @@ func disableNetworkByID(disableState bool, networkID string) error {
 	api := networkaccessmanager.New(curl())
 
 	err := api.DisableNetworkTargetByID(disableState, networkID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-//
-//
-//
-func decodeJSONnam(name string, object interface{}) error {
-	file, err := os.Open(name)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(data, &object)
 	if err != nil {
 		return err
 	}
