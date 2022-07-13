@@ -343,8 +343,8 @@ func idendityProvidersListCmd() *cobra.Command {
 	options := searchOptions{}
 	cmd := &cobra.Command{
 		Use:   "idendity",
-		Short: "List and manage idendity providers",
-		Long:  `List and manage idendity providers`,
+		Short: "List all idendity providers",
+		Long:  `List all idendity providers`,
 		Example: `
 	privx-cli idendity [access flags] --offset offset --limit limit
 		`,
