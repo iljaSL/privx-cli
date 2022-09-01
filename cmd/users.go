@@ -9,7 +9,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -29,12 +28,12 @@ type userOptions struct {
 }
 
 func init() {
-	rootCmd.AddCommand(userListCmd())
+	//rootCmd.AddCommand(userListCmd())
 }
 
 //
 //
-func userListCmd() *cobra.Command {
+/* func userListCmd() *cobra.Command {
 	options := userOptions{}
 
 	cmd := &cobra.Command{
@@ -61,8 +60,8 @@ func userListCmd() *cobra.Command {
 	cmd.AddCommand(externalUserSearchCmd())
 
 	return cmd
-}
-
+} */
+/*
 func userList(options userOptions) error {
 	api := rolestore.New(curl())
 
@@ -72,7 +71,7 @@ func userList(options userOptions) error {
 	}
 
 	return stdout(users)
-}
+} */
 
 //
 //
@@ -357,24 +356,4 @@ func externalUserSearch(options userOptions) error {
 	}
 
 	return stdout(users)
-}
-
-func decodeJSON(name string, object interface{}) error {
-	file, err := os.Open(name)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(data, &object)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

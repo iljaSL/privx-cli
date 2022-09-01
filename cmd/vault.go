@@ -59,7 +59,7 @@ func secretListCmd() *cobra.Command {
 	cmd.AddCommand(vaultUpdateCmd())
 	cmd.AddCommand(secretDeleteCmd())
 	cmd.AddCommand(secretMetadataShowCmd())
-	cmd.AddCommand(secretSearchCmd())
+	//cmd.AddCommand(secretSearchCmd())
 	cmd.AddCommand(secretSchemasShowCmd())
 
 	return cmd
@@ -313,7 +313,7 @@ func secretMetadataShow(options vaultOptions) error {
 
 //
 //
-func secretSearchCmd() *cobra.Command {
+/* func secretSearchCmd() *cobra.Command {
 	options := vaultOptions{}
 
 	cmd := &cobra.Command{
@@ -350,7 +350,7 @@ func secretSearch(options vaultOptions) error {
 	}
 
 	return stdout(secrets)
-}
+} */
 
 //
 //
