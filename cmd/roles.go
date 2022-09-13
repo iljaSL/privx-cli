@@ -23,6 +23,7 @@ type roleOptions struct {
 
 func init() {
 	rootCmd.AddCommand(roleListCmd())
+	rootCmd.AddCommand(idendityProvidersListCmd())
 }
 
 //
@@ -576,4 +577,3 @@ func idenditySearch(params rolestore.Params, keywords string) error {
 
 //
 //
-

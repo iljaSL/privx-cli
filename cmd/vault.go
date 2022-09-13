@@ -67,7 +67,7 @@ func secretListCmd() *cobra.Command {
 	cmd.AddCommand(vaultUpdateCmd())
 	cmd.AddCommand(secretDeleteCmd())
 	cmd.AddCommand(secretMetadataShowCmd())
-	//cmd.AddCommand(secretSearchCmd())
+	cmd.AddCommand(secretSearchCmd())
 	cmd.AddCommand(secretSchemasShowCmd())
 
 	return cmd

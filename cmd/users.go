@@ -38,7 +38,7 @@ type userOptions struct {
 }
 
 func init() {
-	//rootCmd.AddCommand(userListCmd())
+	rootCmd.AddCommand(userListCmd())
 }
 
 //
