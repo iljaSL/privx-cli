@@ -417,7 +417,7 @@ func secretSearch(options vaultOptions) error {
 	}
 
 	return stdout(secrets)
-} */
+}
 
 //
 //

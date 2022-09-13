@@ -44,7 +44,6 @@ func init() {
 //
 //
 
-
 func userListCmd() *cobra.Command {
 
 	options := userOptions{}
@@ -125,7 +124,7 @@ func userList(options userOptions) error {
 	}
 
 	return stdout(users)
-} */
+}
 
 //
 //
