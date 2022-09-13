@@ -323,6 +323,7 @@ func secretMetadataShow(options vaultOptions) error {
 
 //
 //
+
 func vaultValidateFilter(filter string) error {
 	filterAllowedValues := []string{"personal", "shared", "readable", "writable", ""}
 
@@ -357,6 +358,7 @@ func vaultValidateSortKey(sortkey string) error {
 	return fmt.Errorf("filter field must be one of these values %q", sortkeyAllowedValues)
 }
 func secretSearchCmd() *cobra.Command {
+
 	options := vaultOptions{}
 
 	cmd := &cobra.Command{

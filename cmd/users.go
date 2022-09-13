@@ -45,6 +45,7 @@ func init() {
 //
 
 func userListCmd() *cobra.Command {
+
 	options := userOptions{}
 
 	cmd := &cobra.Command{
@@ -99,6 +100,7 @@ func usersValidateSortKey(sortkey string) error {
 
 	return fmt.Errorf("filter field must be one of these values %q", sortkeyAllowedValues)
 }
+
 func userList(options userOptions) error {
 	err := usersValidateSortDir(options.search.sortdir)
 	if err != nil {
