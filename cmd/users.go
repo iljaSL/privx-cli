@@ -9,7 +9,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -408,24 +407,4 @@ func externalUserSearch(options userOptions) error {
 	}
 
 	return stdout(users)
-}
-
-func decodeJSON(name string, object interface{}) error {
-	file, err := os.Open(name)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(data, &object)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
