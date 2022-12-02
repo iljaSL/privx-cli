@@ -34,7 +34,6 @@ type connectionOptions struct {
 
 type uebaOptions struct {
 	datasetID                 string
-	sessionID                 string
 	logs                      bool
 	bin_count                 int
 	set_active_after_training bool
@@ -493,7 +492,7 @@ func uebaCmd() *cobra.Command {
 	cmd.AddCommand(uebaAnomalySettingsCmd())
 	cmd.AddCommand(uebaStartAnalyzingCmd())
 	cmd.AddCommand(uebaStopAnalyzingCmd())
-	cmd.AddCommand(uebaSetupScriptCmd())
+	cmd.AddCommand(uebaScriptDownloadCmd())
 	cmd.AddCommand(uebaDatasetListCmd())
 	cmd.AddCommand(uebaStatusCmd())
 	cmd.AddCommand(uebaInternalStatusCmd())
@@ -561,12 +560,7 @@ func uebaConfigSet(args []string) error {
 		return err
 	}
 
-	err = api.SetUebaConfigurations(&newConfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return api.SetUebaConfigurations(&newConfig)
 }
 
 //
@@ -585,7 +579,7 @@ func uebaAnomalySettingsCmd() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(uebanomalySettingsCreateCmd())
+	cmd.AddCommand(uebaAnomalySettingsCreateCmd())
 
 	return cmd
 }
@@ -603,7 +597,7 @@ func uebaAnomalySettings(args []string) error {
 
 //
 //
-func uebanomalySettingsCreateCmd() *cobra.Command {
+func uebaAnomalySettingsCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create Ueba Anomaly Settings",
@@ -629,12 +623,7 @@ func uebaAnomalySettingsCreate(args []string) error {
 		return err
 	}
 
-	err = api.CreateAnomalySettings(newSettings)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return api.CreateAnomalySettings(newSettings)
 }
 
 //
@@ -663,12 +652,7 @@ func uebaStartAnalyzingCmd() *cobra.Command {
 
 func uebaStartAnalyzing(options uebaOptions) error {
 	api := connectionmanager.New(curl())
-	err := api.StartAnalyzing(options.datasetID)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return api.StartAnalyzing(options.datasetID)
 }
 
 //
@@ -692,91 +676,36 @@ func uebaStopAnalyzingCmd() *cobra.Command {
 
 func uebaStopAnalyzing() error {
 	api := connectionmanager.New(curl())
-	err := api.StopAnalyzing()
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-//
-//
-func uebaSetupScriptCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "setup-script",
-		Short: "Create ID for ueba setup script and download setup script",
-		Long:  `Create ID for ueba setup script and download setup script`,
-		Example: `
-	privx-cli ueba setup-script [access flags]
-		`,
-		SilenceUsage: true,
-	}
-
-	cmd.AddCommand(uebaScriptCreateIdCmd())
-	cmd.AddCommand(uebaScriptDownloadCmd())
-	return cmd
-}
-
-//
-//
-func uebaScriptCreateIdCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "create-id",
-		Short: "Create session ID for Ueba setup script",
-		Long:  `Create session ID for Ueba setup script`,
-		Example: `
-	privx-cli ueba setup-script create-id [access flags]
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return uebaScriptCreateID()
-		},
-	}
-	return cmd
-}
-
-func uebaScriptCreateID() error {
-	api := connectionmanager.New(curl())
-	sessionId, err := api.CreateIdForUebaScript()
-	if err != nil {
-		return err
-	}
-
-	return stdout(sessionId)
+	return api.StopAnalyzing()
 }
 
 //
 //
 func uebaScriptDownloadCmd() *cobra.Command {
-	options := uebaOptions{}
 	cmd := &cobra.Command{
-		Use:   "download",
+		Use:   "download-script",
 		Short: "Download Ueba setup script.",
 		Long:  `Download Ueba setup script.`,
 		Example: `
-	privx-cli ueba setup-script download [access flags] --id <SESSION-ID>
+	privx-cli ueba download-script [access flags]
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return uebaScriptDownload(options)
+			return uebaScriptDownload()
 		},
 	}
 
-	flags := cmd.Flags()
-	flags.StringVar(&options.sessionID, "id", "", "session ID")
-	cmd.MarkFlagRequired("id")
 	return cmd
 }
 
-func uebaScriptDownload(options uebaOptions) error {
+func uebaScriptDownload() error {
 	api := connectionmanager.New(curl())
-	err := api.DownloadUebaScript(options.sessionID)
+	sessionIdstruct, err := api.CreateIdForUebaScript()
 	if err != nil {
 		return err
 	}
+	return api.DownloadUebaScript(sessionIdstruct.ID)
 
-	return err
 }
 
 //
@@ -789,7 +718,7 @@ func uebaDatasetListCmd() *cobra.Command {
 		Long:  `List and manage Ueba Datasets`,
 		Example: `
 	privx-cli ueba datasets [access flags]
-	privx-cli ueba datasets [access flags] --logs false --bin_count 50
+	privx-cli ueba datasets [access flags] --logs false --bin-count 50
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -798,7 +727,7 @@ func uebaDatasetListCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.IntVar(&options.bin_count, "bin_count", 50, "how many bins from training history")
+	flags.IntVar(&options.bin_count, "bin-count", 50, "how many bins from training history")
 	flags.BoolVarP(&options.logs, "logs", "l", false, "add pandas and tensorflow log prints")
 
 	cmd.AddCommand(uebaDatasetCreateCmd())
@@ -869,7 +798,7 @@ func uebaDatasetShowCmd() *cobra.Command {
 		Long:  `Get dataset by ID, possibility to filter training history`,
 		Example: `
 	privx-cli ueba datasets show [access flags] --id <DATASET-ID>
-	privx-cli ueba datasets show [access flags] --id <DATASET-ID> --logs false --bin_count 50
+	privx-cli ueba datasets show [access flags] --id <DATASET-ID> --logs false --bin-count 50
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -879,7 +808,7 @@ func uebaDatasetShowCmd() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVar(&options.datasetID, "id", "", "dataset ID")
-	flags.IntVar(&options.bin_count, "bin_count", 50, "how many bins from training history")
+	flags.IntVar(&options.bin_count, "bin-count", 50, "how many bins from training history")
 	flags.BoolVarP(&options.logs, "logs", "l", false, "add pandas and tensorflow log prints")
 	cmd.MarkFlagRequired("id")
 
@@ -906,7 +835,7 @@ func uebaDatasetUpdateCmd() *cobra.Command {
 		Short: "Update dataset",
 		Long:  `Update dataset. Note this will cause backend to empty training history and delete trained weights in ueba machine.`,
 		Example: `
-	privx-cli ueba datasets update [access flags] JSON-FILE --id <DATASET-ID>
+	privx-cli ueba datasets update [access flags] --id <DATASET-ID> JSON-FILE
 			`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -931,12 +860,7 @@ func uebaDatasetUpdate(options uebaOptions, args []string) error {
 		return err
 	}
 
-	err = api.UpdateUebaDataset(datasetBodyParam, options.datasetID)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return api.UpdateUebaDataset(datasetBodyParam, options.datasetID)
 }
 
 //
@@ -983,7 +907,7 @@ func uebaDatasetTrainCmd() *cobra.Command {
 		Short: "Train dataset",
 		Long:  `Train dataset`,
 		Example: `
-	privx-cli ueba datasets train [access flags] --id <DATASET-ID> --set_active <SET_ACTIVE>
+	privx-cli ueba datasets train [access flags] --id <DATASET-ID> --set-active <SET_ACTIVE>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -993,7 +917,7 @@ func uebaDatasetTrainCmd() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVar(&options.datasetID, "id", "", "dataset ID")
-	flags.BoolVarP(&options.set_active_after_training, "set_active", "a", false, "dataset ID")
+	flags.BoolVarP(&options.set_active_after_training, "set-active", "a", false, "dataset ID")
 	cmd.MarkFlagRequired("id")
 
 	return cmd

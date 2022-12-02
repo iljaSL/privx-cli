@@ -106,12 +106,7 @@ func idpClientUpdate(options idpclientOptions, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = api.UpdateIdpClient(&idpClient, options.idpID)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return api.UpdateIdpClient(&idpClient, options.idpID)
 }
 
 //
@@ -175,13 +170,7 @@ func idpClientDeleteCmd() *cobra.Command {
 
 func idpClientDelete(options idpclientOptions) error {
 	api := authApi.New(curl())
-
-	err := api.DeleteIdpClient(options.idpID)
-	if err != nil {
-		return err
-	}
-
-	return err
+	return api.DeleteIdpClient(options.idpID)
 }
 
 //
