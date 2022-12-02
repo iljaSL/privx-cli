@@ -205,7 +205,7 @@ func accessGroupUpdateCmd() *cobra.Command {
 		Short: "Update access group",
 		Long:  `Update access group`,
 		Example: `
-	privx-cli access-groups update [access flags] JSON-FILE --id <ACCESS-GROUP-ID>
+	privx-cli access-groups update [access flags] --id <ACCESS-GROUP-ID> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,

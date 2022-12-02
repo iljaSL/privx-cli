@@ -249,7 +249,7 @@ func updateNetworkCmd() *cobra.Command {
 		Short: "Update a specific netword target",
 		Long:  `Update a specific netword target`,
 		Example: `
-	privx-cli nam update JSON-FILE --id <NETWORK-ID>
+	privx-cli nam update --id <NETWORK-ID> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,

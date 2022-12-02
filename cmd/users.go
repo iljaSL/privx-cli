@@ -212,7 +212,7 @@ func userSettingsUpdateCmd() *cobra.Command {
 		Short: "Update specific user's settings",
 		Long:  `Update specific user's settings`,
 		Example: `
-	privx-cli users update-settings [access flags] JSON-FILE --id <USER-ID>
+	privx-cli users update-settings [access flags] --id <USER-ID> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,

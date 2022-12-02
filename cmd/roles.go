@@ -187,7 +187,7 @@ func roleUpdateCmd() *cobra.Command {
 		Short: "Update role",
 		Long:  `Update role`,
 		Example: `
-	privx-cli roles update [access flags] JSON-FILE --id <ROLE-ID>
+	privx-cli roles update [access flags] --id <ROLE-ID> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
@@ -499,7 +499,7 @@ func idendityUpdateCmd() *cobra.Command {
 		Short: "Update idendity provider",
 		Long:  `Update idendity provider`,
 		Example: `
-	privx-cli idendity update [access flags] JSON-FILE --id <IDENDITY-PROVIDER-ID>
+	privx-cli idendity update [access flags] --id <IDENDITY-PROVIDER-ID> JSON-FILE
 		`,
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
