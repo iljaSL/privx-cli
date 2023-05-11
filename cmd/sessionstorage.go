@@ -7,6 +7,8 @@
 package cmd
 
 import (
+	"errors"
+
 	authApi "github.com/SSHcom/privx-sdk-go/api/auth"
 	"github.com/spf13/cobra"
 )
@@ -31,15 +33,14 @@ func sessionStorageCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sessions",
 		Short: "List and manage sessions",
-		Long:  `List and manage sessions`,
+		Long:  `List and manage sessions. Only applicable for user sessions, and not other types of sessions.`,
 		Example: `
 	privx-cli sessions [access flags]
 		`,
 		SilenceUsage: true,
 	}
 
-	cmd.AddCommand(userSessionsShowCmd())
-	cmd.AddCommand(sourceSessionsShowCmd())
+	cmd.AddCommand(sessionsShowCmd())
 	cmd.AddCommand(sessionsSearchCmd())
 	cmd.AddCommand(terminateSessionCmd())
 	cmd.AddCommand(terminateUserSessionsCmd())
@@ -49,84 +50,61 @@ func sessionStorageCmd() *cobra.Command {
 
 //
 //
-func userSessionsShowCmd() *cobra.Command {
+func sessionsShowCmd() *cobra.Command {
 	options := sessionStorageOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "show-by-user",
-		Short: "Get sessions by userID",
-		Long:  `Get sessions by userID. Fetch valid sessions for specified user`,
+		Use:   "show",
+		Short: "Get sessions by userID or sourceID",
+		Long:  `Get sessions by userID or sourceID. Provide either the sourceID or userID`,
 		Example: `
-	privx-cli sessions show-by-user [access flags] --id <USER-ID>
+	privx-cli sessions show [access flags] --user-id <USER-ID>
+	privx-cli sessions show [access flags] --source-id <SOURCE-ID>
 		`,
 		SilenceUsage: true,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Validate the flags, either user-id or source-id is required
+			if options.sourceID == "" && options.userID == "" {
+				return errors.New("either user-id or source-id is required")
+			} else if options.sourceID != "" && options.userID != "" {
+				return errors.New("only one of user-id or source-id is allowed")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return userSessionsShow(options)
+			return sessionsShow(options)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&options.userID, "id", "", "User ID")
-	flags.IntVar(&options.offset, "offset", 1, "where to start fetching the items")
-	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
-	flags.StringVar(&options.sortkey, "sortkey", "expires", "sort by specific object property")
-	flags.StringVar(&options.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC")
-	cmd.MarkFlagRequired("id")
-
-	return cmd
-}
-
-func userSessionsShow(options sessionStorageOptions) error {
-	api := authApi.New(curl())
-
-	userSessions, err := api.UserSessions(options.offset, options.limit,
-		options.sortkey, options.sortdir, options.userID)
-	if err != nil {
-		return err
-	}
-
-	return stdout(userSessions)
-}
-
-//
-//
-func sourceSessionsShowCmd() *cobra.Command {
-	options := sessionStorageOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "show-by-source",
-		Short: "Get sessions by sourceID",
-		Long:  `Get sessions by sourceID. Fetch valid sessions for specified source`,
-		Example: `
-	privx-cli sessions show-by-source [access flags] --id <SOURCE-ID>
-		`,
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return sourceSessionsShow(options)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.sourceID, "id", "", "Source ID")
+	flags.StringVar(&options.userID, "user-id", "", "User ID")
+	flags.StringVar(&options.sourceID, "source-id", "", "Source ID")
 	flags.IntVar(&options.offset, "offset", 0, "where to start fetching the items")
 	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
 	flags.StringVar(&options.sortkey, "sortkey", "expires", "sort by specific object property")
 	flags.StringVar(&options.sortdir, "sortdir", "ASC", "sort direction, ASC or DESC")
-	cmd.MarkFlagRequired("id")
 
 	return cmd
 }
 
-func sourceSessionsShow(options sessionStorageOptions) error {
+func sessionsShow(options sessionStorageOptions) error {
 	api := authApi.New(curl())
-
-	sourceSessions, err := api.SourceSessions(options.offset, options.limit,
-		options.sortkey, options.sortdir, options.sourceID)
-	if err != nil {
-		return err
+	if options.userID != "" {
+		userSessions, err := api.UserSessions(options.offset, options.limit,
+			options.sortkey, options.sortdir, options.userID)
+		if err != nil {
+			return err
+		}
+		return stdout(userSessions)
+	} else if options.sourceID != "" {
+		sourceSessions, err := api.SourceSessions(options.offset, options.limit,
+			options.sortkey, options.sortdir, options.sourceID)
+		if err != nil {
+			return err
+		}
+		return stdout(sourceSessions)
 	}
-
-	return stdout(sourceSessions)
+	return nil
 }
 
 //
