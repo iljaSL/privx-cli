@@ -190,11 +190,11 @@ func terminateUserSessionsCmd() *cobra.Command {
 	options := sessionStorageOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "terminate-user",
+		Use:   "terminate-all",
 		Short: "Terminate all sessions for a user",
 		Long:  `Terminate all sessions for a user by userID`,
 		Example: `
-	privx-cli sessions terminate-user [access flags] --id <USER-ID>
+	privx-cli sessions terminate-all [access flags] --id <USER-ID>
 		`,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
