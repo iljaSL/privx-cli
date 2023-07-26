@@ -993,7 +993,6 @@ func uebaStatusCmd() *cobra.Command {
 }
 
 func uebaStatus() error {
-	var status connectionmanager.ServiceStatus
 	api := connectionmanager.New(curl())
 	status, err := api.UebaStatus()
 	if err != nil {
