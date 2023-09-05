@@ -16,20 +16,21 @@ import (
 )
 
 type connectionOptions struct {
-	channID  string
-	fileID   string
-	connID   string
-	roleID   string
-	userID   string
-	hostID   string
-	fileName string
-	sortkey  string
-	sortdir  string
-	format   string
-	filter   string
-	offset   int
-	limit    int
-	force    bool
+	channID    string
+	fileID     string
+	connID     string
+	roleID     string
+	userID     string
+	hostID     string
+	fileName   string
+	sortkey    string
+	sortdir    string
+	format     string
+	filter     string
+	offset     int
+	limit      int
+	fuzzyCount bool
+	force      bool
 }
 
 type uebaOptions struct {
@@ -45,8 +46,6 @@ func init() {
 
 }
 
-//
-//
 func connectionListCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -68,6 +67,7 @@ func connectionListCmd() *cobra.Command {
 	flags.IntVar(&options.limit, "limit", 50, "number of items to return")
 	flags.StringVar(&options.sortkey, "sortkey", "", "sort by specific object property")
 	flags.StringVar(&options.sortdir, "sortdir", "", "sort direction, ASC or DESC (default ASC)")
+	flags.BoolVarP(&options.fuzzyCount, "fuzzycount", "", false, "return a fuzzy total count instead of exact total count")
 
 	cmd.AddCommand(connectionSearchCmd())
 	cmd.AddCommand(connectionShowCmd())
@@ -85,7 +85,7 @@ func connectionList(options connectionOptions) error {
 	api := connectionmanager.New(curl())
 
 	conn, err := api.Connections(options.offset, options.limit,
-		options.sortkey, options.sortdir)
+		options.sortkey, options.sortdir, options.fuzzyCount)
 	if err != nil {
 		return err
 	}
@@ -93,8 +93,6 @@ func connectionList(options connectionOptions) error {
 	return stdout(conn)
 }
 
-//
-//
 func connectionSearchCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -134,7 +132,7 @@ func connectionSearch(options connectionOptions, args []string) error {
 	}
 
 	conn, err := api.SearchConnections(options.offset, options.limit, options.sortdir,
-		options.sortkey, searchObject)
+		options.sortkey, options.fuzzyCount, searchObject)
 	if err != nil {
 		return err
 	}
@@ -142,8 +140,6 @@ func connectionSearch(options connectionOptions, args []string) error {
 	return stdout(conn)
 }
 
-//
-//
 func connectionShowCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -182,8 +178,6 @@ func connectionShow(options connectionOptions) error {
 	return stdout(conns)
 }
 
-//
-//
 func storedFileDownloadCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -230,8 +224,6 @@ func storedFileDownload(options connectionOptions) error {
 	return nil
 }
 
-//
-//
 func trailLogDownloadCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -278,8 +270,6 @@ func trailLogDownload(options connectionOptions) error {
 	return nil
 }
 
-//
-//
 func accessRoleListCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -314,8 +304,6 @@ func accessRoleList(options connectionOptions) error {
 	return stdout(roles)
 }
 
-//
-//
 func connectionAccessRoleGrantCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -352,8 +340,6 @@ func connectionAccessRoleGrant(options connectionOptions) error {
 	return nil
 }
 
-//
-//
 func connectionAccessRoleRevokeCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -402,8 +388,6 @@ func connectionAccessRoleRevoke(options connectionOptions) error {
 	return nil
 }
 
-//
-//
 func connectionTerminateCmd() *cobra.Command {
 	options := connectionOptions{}
 
@@ -475,8 +459,6 @@ func terminateConnectionByUser(options connectionOptions) error {
 	return nil
 }
 
-//
-//
 func uebaCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ueba",
@@ -499,8 +481,6 @@ func uebaCmd() *cobra.Command {
 	return cmd
 }
 
-//
-//
 func uebaConfigCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
@@ -531,8 +511,6 @@ func uebaConfig() error {
 	return stdout(configs)
 }
 
-//
-//
 func uebaConfigSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set",
@@ -563,8 +541,6 @@ func uebaConfigSet(args []string) error {
 	return api.SetUebaConfigurations(&newConfig)
 }
 
-//
-//
 func uebaAnomalySettingsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "anomaly-settings",
@@ -595,8 +571,6 @@ func uebaAnomalySettings(args []string) error {
 	return stdout(settings)
 }
 
-//
-//
 func uebaAnomalySettingsCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -626,8 +600,6 @@ func uebaAnomalySettingsCreate(args []string) error {
 	return api.CreateAnomalySettings(newSettings)
 }
 
-//
-//
 func uebaStartAnalyzingCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -655,8 +627,6 @@ func uebaStartAnalyzing(options uebaOptions) error {
 	return api.StartAnalyzing(options.datasetID)
 }
 
-//
-//
 func uebaStopAnalyzingCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stop-analysis",
@@ -679,8 +649,6 @@ func uebaStopAnalyzing() error {
 	return api.StopAnalyzing()
 }
 
-//
-//
 func uebaScriptDownloadCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "download-script",
@@ -708,8 +676,6 @@ func uebaScriptDownload() error {
 
 }
 
-//
-//
 func uebaDatasetListCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -751,8 +717,6 @@ func uebaDatasets(options uebaOptions) error {
 	return stdout(datasets)
 }
 
-//
-//
 func uebaDatasetCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
@@ -788,8 +752,6 @@ func uebaDatasetCreate(args []string) error {
 	return stdout(datasetID)
 }
 
-//
-//
 func uebaDatasetShowCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -826,8 +788,6 @@ func uebaDatasetShow(options uebaOptions) error {
 	return stdout(dataset)
 }
 
-//
-//
 func uebaDatasetUpdateCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -863,8 +823,6 @@ func uebaDatasetUpdate(options uebaOptions, args []string) error {
 	return api.UpdateUebaDataset(datasetBodyParam, options.datasetID)
 }
 
-//
-//
 func uebaDatasetDeleteCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -898,8 +856,6 @@ func uebaDatasetDelete(options uebaOptions) error {
 	return err
 }
 
-//
-//
 func uebaDatasetTrainCmd() *cobra.Command {
 	options := uebaOptions{}
 	cmd := &cobra.Command{
@@ -934,8 +890,6 @@ func uebaDatasetTrain(options uebaOptions) error {
 	return stdout(connectionCount)
 }
 
-//
-//
 func uebaConnectionCountsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "connection-count",
@@ -973,8 +927,6 @@ func uebaConnectionCounts(args []string) error {
 	return stdout(count)
 }
 
-//
-//
 func uebaStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "status",
@@ -1002,8 +954,6 @@ func uebaStatus() error {
 	return stdout(status)
 }
 
-//
-//
 func uebaInternalStatusCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "internal-status",
