@@ -1,9 +1,9 @@
 module github.com/SSHcom/privx-cli
 
-go 1.20
+go 1.21
 
 require (
-	github.com/SSHcom/privx-sdk-go v1.30.0
+	github.com/SSHcom/privx-sdk-go v1.31.0
 	github.com/spf13/cobra v1.7.0
 )
 
