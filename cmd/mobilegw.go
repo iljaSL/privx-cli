@@ -7,7 +7,6 @@
 package cmd
 
 import (
-	"errors"
 	"os"
 
 	authApi "github.com/SSHcom/privx-sdk-go/api/auth"
@@ -23,7 +22,7 @@ func mobilegwCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "mobilegw",
 		Short:        "Manage mobilegw registration",
-		Long:         `Manage mobilegw registration. Manage user paired devices.`,
+		Long:         `Manage mobile gateway registration. Manage user paired devices.`,
 		Example:      `privx-cli mobilegw [access flags]`,
 		SilenceUsage: true,
 	}
@@ -41,7 +40,7 @@ func registerToMobileGwCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "register",
 		Short:        "Register",
-		Long:         `Register PrivX to the MobileGW`,
+		Long:         `Register PrivX to the Mobile Gateway`,
 		Example:      `privx-cli mobilegw register`,
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -69,7 +68,7 @@ func unregisterToMobileGWCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "unregister",
 		Short:        "Unregister",
-		Long:         `Unregister PrivX from the MobileGW`,
+		Long:         `Unregister PrivX from the Mobile Gateway`,
 		Example:      `privx-cli mobilegw unregister`,
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -93,10 +92,10 @@ func unregisterFromMobileGw() error {
 
 func getMobileGwRegistrationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "regstat",
+		Use:          "registration-status",
 		Short:        "Registration status",
-		Long:         `Get PrivX registration status to the MobileGW`,
-		Example:      `privx-cli mobilegw regstat`,
+		Long:         `Get PrivX registration status to the Mobile Gateway`,
+		Example:      `privx-cli mobilegw registration-status`,
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getMobileGwRegistration()
@@ -126,12 +125,6 @@ func getUserPairedDevicesCmd() *cobra.Command {
 		Long:         `List paired devices of a user`,
 		Example:      `privx-cli mobilegw paired-devices --user-id`,
 		SilenceUsage: false,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if userId == "" {
-				return errors.New("user-id is required")
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return getUserPairedDevices(userId)
 		},
@@ -139,6 +132,8 @@ func getUserPairedDevicesCmd() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVar(&userId, "user-id", "", "User ID")
+
+	cmd.MarkFlagRequired("user-id")
 
 	return cmd
 }
@@ -163,12 +158,6 @@ func unpairUserDeviceCmd() *cobra.Command {
 		Long:         `Unaired a user's devices`,
 		Example:      `privx-cli mobilegw unpair-device --user-id --device-id`,
 		SilenceUsage: false,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if userId == "" || deviceId == "" {
-				return errors.New("user-id and device-id are required")
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return unpairUserDevice(userId, deviceId)
 		},
@@ -177,6 +166,9 @@ func unpairUserDeviceCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVar(&userId, "user-id", "", "User ID")
 	flags.StringVar(&deviceId, "device-id", "", "Device ID")
+
+	cmd.MarkFlagRequired("user-id")
+	cmd.MarkFlagRequired("device-id")
 
 	return cmd
 }
