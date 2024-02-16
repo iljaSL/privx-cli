@@ -31,6 +31,8 @@ func init() {
 	rootCmd.AddCommand(settingsCmd())
 }
 
+//
+//
 func settingsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "settings",
@@ -43,11 +45,12 @@ func settingsCmd() *cobra.Command {
 	cmd.AddCommand(settingUpdateCmd())
 	cmd.AddCommand(schemaListCmd())
 	cmd.AddCommand(schemaShowCmd())
-	cmd.AddCommand(settingRestartRequiredCmd())
 
 	return cmd
 }
 
+//
+//
 func settingShowCmd() *cobra.Command {
 	options := settingsOptions{}
 
@@ -93,6 +96,8 @@ func settingShow(options settingsOptions) error {
 	}
 }
 
+//
+//
 func settingUpdateCmd() *cobra.Command {
 	options := settingsOptions{}
 
@@ -139,6 +144,8 @@ func settingUpdate(options settingsOptions, args []string) error {
 	return err
 }
 
+//
+//
 func schemaListCmd() *cobra.Command {
 	options := settingsOptions{}
 
@@ -172,6 +179,8 @@ func schemaList(options settingsOptions) error {
 	return stdout(res)
 }
 
+//
+//
 func schemaShowCmd() *cobra.Command {
 	options := settingsOptions{}
 
@@ -201,47 +210,6 @@ func schemaShow(options settingsOptions) error {
 
 	res, err := api.SectionSchema(options.normalize_scope(),
 		options.normalize_section())
-	if err != nil {
-		return err
-	}
-
-	return stdout(res)
-}
-
-func settingRestartRequiredCmd() *cobra.Command {
-	options := settingsOptions{}
-
-	cmd := &cobra.Command{
-		Use:   "restart-required",
-		Short: "Verify if restart is required.",
-		Long:  `Verify if restart is required for given settings scope.`,
-		Example: `
-	privx-cli settings restart-required [access flags] --scope <SCOPE>
-		`,
-		Args:         cobra.ExactArgs(1),
-		SilenceUsage: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return settingRestartRequired(options, args)
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&options.scope, "scope", "", "scope setting name")
-	cmd.MarkFlagRequired("scope")
-
-	return cmd
-}
-
-func settingRestartRequired(options settingsOptions, args []string) error {
-	var s json.RawMessage
-	api := settings.New(curl())
-
-	err := decodeJSON(args[0], &s)
-	if err != nil {
-		return err
-	}
-
-	res, err := api.RestartRequired(&s, options.normalize_scope())
 	if err != nil {
 		return err
 	}
